@@ -75,9 +75,7 @@ void drawText(char *text)
 int timerShowing = 0;
 void callbackFunction(uint gpio, uint32_t events)
 {
-    printf("Botão %d pressionado\n", gpio);
-    timerShowing = 12;
-    // char text[50];
+    shoot(&player);
     // clearDisplay();
     // sprintf(text, "Botão %d pressionado", gpio);
     // drawText(text, 0);
@@ -158,6 +156,9 @@ void sendInfoToServer(int info)
 int lives = 3;
 int score = 450;
 
+int steps = 0;
+int headerMode = 1; // 0 - Mostra IP, 1 - Mostra Nome do Level
+
 int main()
 {
     stdio_init_all();
@@ -183,9 +184,22 @@ int main()
     {
         clearDisplay();
         // Header
-        ssd1306_draw_string(&display, 0, 0, 1, ip_str);
         ssd1306_clear_square(&display, 0, 12, SCREEN_WIDTH, SCREEN_HEIGHT - 12);
+        if (headerMode == 0)
+        {
+            ssd1306_draw_string(&display, 0, 0, 1, ip_str);
+        }
+        else
+        {
+            ssd1306_draw_string(&display, 0, 0, 1, "Espaco Sideral");
+        }
         ssd1306_draw_line(&display, 0, 12, SCREEN_WIDTH, 12);
+
+        steps++;
+        if (steps % 100 == 0)
+        {
+            headerMode = !headerMode;
+        }
 
         moveStars();
         drawStars();
@@ -195,7 +209,10 @@ int main()
         movePlayer(&player, analog_x, analog_y);
         drawPlayer(&player);
 
-        if (player.x < 5)
+        updateBullets();
+        drawBullets();
+
+        if (player.x < 2)
         {
             sendInfoToServer(1);
             sleep_ms(5000);

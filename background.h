@@ -17,6 +17,6 @@ void drawStars();
 
 // Variáveis globais
 extern Star stars[10];
-#define STARS_SPEED 2
+#define STARS_SPEED 1
 
 #endif // BACKGROUND_H
