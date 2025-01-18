@@ -39,6 +39,7 @@ add_executable(Patrowifi main.c
 lib/pico-ssd1306/ssd1306.c
 initialize.c
 player.c
+background.c
 )
 
 pico_set_program_name(Patrowifi "Patrowifi")

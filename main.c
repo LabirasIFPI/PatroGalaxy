@@ -4,6 +4,7 @@
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 #include "player.h"
+#include "background.h"
 
 // Wi-fi
 #define WIFI_SSID "pat"
@@ -117,7 +118,6 @@ int tryToConnect()
     }
 }
 
-
 // Atualiza os valores apontados por analog_x e analog_y
 void updateAxis(uint *analog_x, uint *analog_y)
 {
@@ -177,6 +177,8 @@ int main()
 
     sleep_ms(1000);
 
+    initStars();
+
     while (true)
     {
         clearDisplay();
@@ -184,6 +186,9 @@ int main()
         ssd1306_draw_string(&display, 0, 0, 1, ip_str);
         ssd1306_clear_square(&display, 0, 12, SCREEN_WIDTH, SCREEN_HEIGHT - 12);
         ssd1306_draw_line(&display, 0, 12, SCREEN_WIDTH, 12);
+
+        moveStars();
+        drawStars();
 
         int analog_x, analog_y;
         updateAxis(&analog_x, &analog_y);
