@@ -3,21 +3,14 @@
 #include "initialize.h"
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
+#include "player.h"
 
 // Wi-fi
 #define WIFI_SSID "pat"
 #define WIFI_PASSWORD "rajadaaaa"
 #include "lwip/tcp.h"
 
-// Relacionados a Telinha
-#include "hardware/i2c.h"
-#include "ssd1306.h"
 ssd1306_t display;
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-#define SCREEN_ADDRESS 0x3C // Endereço I2C do display
-#define I2C_SDA 14          // Pino SDA
-#define I2C_SCL 15          // Pino SCL
 
 // Pinos
 #define BTA 5
@@ -124,40 +117,6 @@ int tryToConnect()
     }
 }
 
-typedef struct
-{
-    int x;
-    int y;
-} Player;
-
-Player player = {SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2};
-
-void movePlayer(int deltaX, int deltaY)
-{
-    player.x += deltaX;
-    player.y += deltaY;
-
-    int limitY = 12;
-
-    // Limitar a posição do player dentro dos limites da tela
-    if (player.x < 0)
-        player.x = 0;
-    if (player.x >= SCREEN_WIDTH)
-        player.x = SCREEN_WIDTH - 1;
-    if (player.y < limitY)
-        player.y = limitY;
-    if (player.y >= SCREEN_HEIGHT - limitY)
-        player.y = SCREEN_HEIGHT - 1 - limitY;
-
-    printf("Player moved to (%d, %d)\n", player.x, player.y);
-}
-
-void drawPlayer()
-{
-    char text[4] = "3=D";
-    int textWidth = 5 * strlen(text); // Assumindo que a fonte padrão tem 6 pixels de largura
-    ssd1306_draw_string(&display, player.x - textWidth / 2, player.y, 1, text);
-}
 
 // Atualiza os valores apontados por analog_x e analog_y
 void updateAxis(uint *analog_x, uint *analog_y)
@@ -228,8 +187,8 @@ int main()
 
         int analog_x, analog_y;
         updateAxis(&analog_x, &analog_y);
-        movePlayer(analog_x, analog_y);
-        drawPlayer();
+        movePlayer(&player, analog_x, analog_y);
+        drawPlayer(&player);
 
         if (player.x < 5)
         {
