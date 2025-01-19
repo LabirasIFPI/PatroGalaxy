@@ -5,6 +5,8 @@
 // General Imports
 #include "initialize.h"
 #include "utils.h"
+#include <math.h>
+#include <time.h>
 
 // Project-specific imports
 #include "player.h"
@@ -22,7 +24,7 @@
 #include "lwip/tcp.h"
 
 // Game Definitions
-#define STEP_CYCLE 30
+#define STEP_CYCLE 3
 
 // Display Instance
 ssd1306_t display;
@@ -185,8 +187,16 @@ int lives = 3;
 int score = 0;
 int scoreDraw = 0;
 int steps = 0;
-int headerMode = 1; // 0 - Mostra IP, 1 - Mostra Nome do Level
-int gameState = 0;  // 0 - Menu, 1 - Game, 2 - Game Over
+int headerMode = 1;    // 0 - Mostra IP, 1 - Mostra Nome do Level
+int gameState = 0;     // 0 - Menu, 1 - Game, 2 - Game Over
+int startProgress = 0; // 0 to 100
+int transitioningToState = -1;
+
+void changeGameState(int state)
+{
+    transitioningToState = state;
+    startProgress = 0;
+}
 
 /**
  * @brief Callback function to handle GPIO events.
@@ -199,12 +209,22 @@ int gameState = 0;  // 0 - Menu, 1 - Game, 2 - Game Over
  */
 void callbackFunction(uint gpio, uint32_t events)
 {
-    if (gameState == 1) // Game
+    switch (gameState)
     {
-        if (gpio == BTA)
+    case 0:
+        if (gpio == BTB)
+        {
+            changeGameState(1);
+        }
+        break;
+    case 1: // Game
+        if (gpio == BTB)
         {
             shoot(&player);
         }
+        break;
+    default:
+        break;
     }
 }
 
@@ -255,6 +275,27 @@ void drawInterface()
     ssd1306_draw_string(&display, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 8, 1, text);
 }
 
+void drawTransition()
+{
+    if (transitioningToState == -1 && startProgress == 0)
+    {
+        return;
+    }
+    startProgress += 6 * (1 - (2 * (transitioningToState == -1)));
+
+    if (startProgress >= 100 && transitioningToState != -1)
+    {
+        gameState = transitioningToState;
+        transitioningToState = -1;
+        return;
+    }
+
+    // Desenhar um retangulo cobrindo a tela com base no valor de startProgress
+    int rectHeight = (SCREEN_HEIGHT * startProgress) / 100;
+    ssd1306_clear_square(&display, 0, SCREEN_HEIGHT - rectHeight, SCREEN_WIDTH, rectHeight);
+    ssd1306_show(&display);
+}
+
 int main()
 {
     stdio_init_all();
@@ -266,25 +307,75 @@ int main()
     initAnalog();
     initButtons(callbackFunction);
 
-    initWifi();
-    int connectTries = 0;
-    int connected = 0;
-    while (!connected && connectTries < 3)
-    {
-        connected = tryToConnect();
-        connectTries++;
-    }
+    // initWifi();
+    // int connectTries = 0;
+    // int connected = 0;
+    // while (!connected && connectTries < 3)
+    // {
+    //     connected = tryToConnect();
+    //     connectTries++;
+    // }
 
-    if (!connected)
-    {
-        drawText("Disconnected");
-        strcpy(ip_str, "Disconnected");
-    }
-
-    sleep_ms(1000);
+    // if (!connected)
+    // {
+    //     drawText("Disconnected");
+    //     strcpy(ip_str, "Disconnected");
+    // }
 
     initStars();
 
+    gameState = 0; // Menu
+    int introTime = 0;
+    char patroName[50] = "PatroGalaxy";
+
+    int showPressStart = 0;
+    int pressStart = 0;
+
+    float amplitude = 8.0;
+    int _yAdd = 64;
+    while (gameState == 0)
+    {
+        clearDisplay();
+        int ang = introTime * 6;
+        _yAdd = _yAdd > 0 ? _yAdd - 1 : 0;
+
+        // Background
+        moveStars();
+        drawStars();
+
+        // PatroGalaxy
+        for (int i = 0; i < strlen(patroName); i++)
+        {
+            char letter[2] = {patroName[i], '\0'};
+            int _x = 64 - 5 * strlen(patroName) / 2 + 5 * i;
+            int _y = SCREEN_HEIGHT / 2 + sin(ang + i * 60) * amplitude + _yAdd;
+            ssd1306_draw_char(&display, _x, _y, 1, letter[0]);
+        }
+
+        // Press Start
+        char startText[50];
+        sprintf(startText, "Press Start");
+        int _x = SCREEN_WIDTH / 2 - 5 * (strlen(startText) + 1) / 2;
+        int _y = SCREEN_HEIGHT - 10;
+        ssd1306_draw_string(&display, _x, _y, 1, showPressStart ? startText : "");
+
+        drawTransition();
+
+        introTime++;
+
+        amplitude = amplitude > 0 ? amplitude - 0.069 : 0;
+
+        if (introTime > 30 && amplitude == 0)
+        {
+            showPressStart = !showPressStart;
+            introTime = 0;
+        }
+
+        ssd1306_show(&display);
+        sleep_ms(STEP_CYCLE);
+    }
+
+    // Game State
     while (true)
     {
         clearDisplay();
@@ -312,6 +403,8 @@ int main()
         }
 
         drawInterface();
+
+        drawTransition();
 
         ssd1306_show(&display);
         sleep_ms(STEP_CYCLE);
