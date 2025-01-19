@@ -1,14 +1,54 @@
 #include "player.h"
-#include "ssd1306.h"
 #include "initialize.h"
-#include <stdio.h>
+
+#include "ssd1306.h"
+
 #include "pico/stdlib.h"
+
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 // Definição do Player (global)
 Player player = {SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2};
 
 // Definição das balas (global)
 Bullet bullets[MAX_BULLETS];
+
+void initBullets()
+{
+    for (int i = 0; i < MAX_BULLETS; i++)
+    {
+        bullets[i].active = 0;
+    }
+}
+
+void updateBullets()
+{
+    for (int i = 0; i < MAX_BULLETS; i++)
+    {
+        if (bullets[i].active)
+        {
+            bullets[i].x += bullets[i].dx;
+            bullets[i].y += bullets[i].dy;
+            if (bullets[i].x < 0 || bullets[i].x >= SCREEN_WIDTH || bullets[i].y < 0 || bullets[i].y >= SCREEN_HEIGHT)
+            {
+                bullets[i].active = 0;
+            }
+        }
+    }
+}
+
+void drawBullets()
+{
+    for (int i = 0; i < MAX_BULLETS; i++)
+    {
+        if (bullets[i].active)
+        {
+            ssd1306_draw_char(&display, bullets[i].x, bullets[i].y, 1, '>');
+        }
+    }
+}
 
 /**
  * @brief Inicializa o Player na posição central da tela.
@@ -53,41 +93,6 @@ void drawPlayer(Player *player)
     char text[4] = "3=D";
     int textWidth = 5 * strlen(text); // Assumindo que a fonte padrão tem 5 pixels de largura
     ssd1306_draw_string(&display, player->x - textWidth / 2, player->y, 1, text);
-}
-
-void initBullets()
-{
-    for (int i = 0; i < MAX_BULLETS; i++)
-    {
-        bullets[i].active = 0;
-    }
-}
-
-void updateBullets()
-{
-    for (int i = 0; i < MAX_BULLETS; i++)
-    {
-        if (bullets[i].active)
-        {
-            bullets[i].x += bullets[i].dx;
-            bullets[i].y += bullets[i].dy;
-            if (bullets[i].x < 0 || bullets[i].x >= SCREEN_WIDTH || bullets[i].y < 0 || bullets[i].y >= SCREEN_HEIGHT)
-            {
-                bullets[i].active = 0;
-            }
-        }
-    }
-}
-
-void drawBullets()
-{
-    for (int i = 0; i < MAX_BULLETS; i++)
-    {
-        if (bullets[i].active)
-        {
-            ssd1306_draw_char(&display, bullets[i].x, bullets[i].y, 1, '>');
-        }
-    }
 }
 
 void shoot(Player *player)

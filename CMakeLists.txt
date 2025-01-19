@@ -40,6 +40,7 @@ lib/pico-ssd1306/ssd1306.c
 initialize.c
 player.c
 background.c
+utils.c
 )
 
 pico_set_program_name(Patrowifi "Patrowifi")

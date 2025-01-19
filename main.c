@@ -1,68 +1,56 @@
+// Standard library imports
 #include <stdio.h>
 #include <stdint.h>
+
+// General Imports
 #include "initialize.h"
-#include "pico/stdlib.h"
-#include "pico/cyw43_arch.h"
+#include "utils.h"
+
+// Project-specific imports
 #include "player.h"
 #include "background.h"
 
-// Wi-fi
+// Pico SDK imports
+#include "pico/stdlib.h"
+#include "pico/cyw43_arch.h"
+
+// Wi-Fi configuration
 #define WIFI_SSID "pat"
 #define WIFI_PASSWORD "rajadaaaa"
+
+// lwIP library import
 #include "lwip/tcp.h"
 
+// Game Definitions
+#define STEP_CYCLE 30
+
+// Display Instance
 ssd1306_t display;
 
-// Pinos
-#define BTA 5
-#define BTB 6
-typedef void (*callback_t)(uint gpio, uint32_t events);
-void initButtons(callback_t callbackFunction)
-{
-    if (callbackFunction == NULL)
-        return;
-    int buttons[2] = {BTA, BTB};
-    for (int i = 0; i < 2; i++)
-    {
-        gpio_init(buttons[i]);
-        gpio_set_dir(buttons[i], GPIO_IN);
-        gpio_pull_up(buttons[i]);
-        gpio_set_irq_enabled_with_callback(buttons[i], GPIO_IRQ_EDGE_RISE, true, callbackFunction);
-        printf("Botão %d inicializado\n", i);
-    }
-}
-
-void initI2C()
-{
-    // Inicializa I2C no canal 1
-    i2c_init(i2c1, 400 * 1000); // 400 kHz
-    gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
-    gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
-    gpio_pull_up(I2C_SDA);
-    gpio_pull_up(I2C_SCL);
-    printf("I2C inicializado\n");
-}
-
-void initDisplay()
-{
-    // Inicializa o display
-    if (!ssd1306_init(&display, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_ADDRESS, i2c1))
-    {
-        printf("Falha ao inicializar o display SSD1306\n");
-    }
-    else
-    {
-        printf("Display SSD1306 inicializado\n");
-    }
-}
-
+/**
+ * @brief Clears the SSD1306 display.
+ *
+ * This function clears the contents of the SSD1306 display by calling the
+ * ssd1306_clear function and passing the display instance.
+ */
 void clearDisplay()
 {
     ssd1306_clear(&display);
 }
 
-// Debug Row
+// Debug Row Number
 int textInd = 0;
+
+/**
+ * @brief Draws text on the SSD1306 display.
+ *
+ * This function draws the given text on the SSD1306 display at a position
+ * determined by the current text index. After drawing the text, it updates
+ * the display and increments the text index. If the text index reaches 6,
+ * it wraps around to 0.
+ *
+ * @param text The text string to be drawn on the display.
+ */
 void drawText(char *text)
 {
     int ind = textInd;
@@ -72,24 +60,24 @@ void drawText(char *text)
     textInd = textInd >= 6 ? 0 : textInd;
 }
 
-int timerShowing = 0;
-void callbackFunction(uint gpio, uint32_t events)
-{
-    shoot(&player);
-    // clearDisplay();
-    // sprintf(text, "Botão %d pressionado", gpio);
-    // drawText(text, 0);
-}
-
-char ip_str[16];
-int tryToConnect()
+/**
+ * @brief Initializes the Wi-Fi chip and enables Wi-Fi station mode.
+ *
+ * This function initializes the Wi-Fi chip using the `cyw43_arch_init` function.
+ * If the initialization fails, it prints an error message and returns 1.
+ * If the initialization is successful, it prints a success message and enables
+ * the Wi-Fi station mode using the `cyw43_arch_enable_sta_mode` function.
+ *
+ * @return int Returns 0 if the initialization is successful, otherwise returns 1.
+ */
+int initWifi()
 {
     // Initialise the Wi-Fi chip
     if (cyw43_arch_init())
     {
         printf("Wi-Fi init failed\n");
         drawText("Wi-Fi init failed");
-        return -1;
+        return 1;
     }
 
     drawText("Wi-Fi init success");
@@ -97,12 +85,30 @@ int tryToConnect()
     // Enable wifi station
     cyw43_arch_enable_sta_mode();
 
+    return 0;
+}
+
+// IP address string
+char ip_str[16];
+
+/**
+ * @brief Attempts to connect to a Wi-Fi network using predefined SSID and password.
+ *
+ * This function tries to establish a connection to a Wi-Fi network using the
+ * credentials defined by WIFI_SSID and WIFI_PASSWORD. It provides feedback
+ * through console output and a graphical interface by calling `drawText`.
+ *
+ * @return int Returns 1 if the connection is successful, otherwise returns 0.
+ */
+int tryToConnect()
+{
     printf("Connecting to Wi-Fi...\n");
-    if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000))
+    drawText("Connecting to Wi-Fi...");
+    if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 8000))
     {
         printf("failed to connect.\n");
         drawText("Failed to connect");
-        return 1;
+        return 0;
     }
     else
     {
@@ -113,17 +119,38 @@ int tryToConnect()
         snprintf(ip_str, sizeof(ip_str), "%d.%d.%d.%d", ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
         printf("IP address %s\n", ip_str);
         drawText(ip_str);
+        return 1;
     }
 }
 
-// Atualiza os valores apontados por analog_x e analog_y
+/**
+ * @brief Updates the values of the analog X and Y axes.
+ *
+ * This function reads the current values of the analog X and Y axes
+ * and updates the provided pointers with these values.
+ *
+ * @param analog_x Pointer to an unsigned integer where the analog X value will be stored.
+ * @param analog_y Pointer to an unsigned integer where the analog Y value will be stored.
+ */
 void updateAxis(uint *analog_x, uint *analog_y)
 {
     *analog_x = readAnalogX();
     *analog_y = readAnalogY();
 }
 
-void sendInfoToServer(int info)
+/**
+ * @brief Sends information to the server.
+ *
+ * This function creates a new TCP protocol control block (PCB), connects to the server
+ * at the specified IP address and port, and sends the provided information to the server.
+ * It also provides feedback through the `drawText` function to indicate the status of the operation.
+ *
+ * @param info The information to be sent to the server.
+ *
+ * @note This function is still under development and may not handle all edge cases or errors.
+ *       The connection callback function is currently set to NULL and the PCB is not closed after sending data.
+ */
+void sendInfoToServer(int info) // Incomplete function
 {
     struct tcp_pcb *pcb = tcp_new();
     if (!pcb)
@@ -153,11 +180,80 @@ void sendInfoToServer(int info)
     drawText("Info sent to server");
 }
 
+// Game Variables
 int lives = 3;
-int score = 450;
-
+int score = 0;
+int scoreDraw = 0;
 int steps = 0;
 int headerMode = 1; // 0 - Mostra IP, 1 - Mostra Nome do Level
+int gameState = 0;  // 0 - Menu, 1 - Game, 2 - Game Over
+
+/**
+ * @brief Callback function to handle GPIO events.
+ *
+ * This function is called when a GPIO event occurs. It checks the current game state
+ * and performs actions based on the GPIO pin that triggered the event.
+ *
+ * @param gpio The GPIO pin number that triggered the event.
+ * @param events The event mask indicating the type of event that occurred.
+ */
+void callbackFunction(uint gpio, uint32_t events)
+{
+    if (gameState == 1) // Game
+    {
+        if (gpio == BTA)
+        {
+            shoot(&player);
+        }
+    }
+}
+
+/**
+ * @brief Draws the user interface on the SSD1306 display.
+ *
+ * This function updates the display with the current interface elements, including the header, bottom bar, lives, and score.
+ * The header alternates between displaying the IP address and a static text "Espaco Sideral" every 100 steps.
+ * The bottom bar displays the current number of lives and the score.
+ *
+ * @note The function assumes the existence of global variables: `display`, `headerMode`, `ip_str`, `steps`, `lives`, `score`, and `scoreDraw`.
+ * @note The function uses the SSD1306 library functions to draw on the display.
+ */
+void drawInterface()
+{
+    // Header
+    ssd1306_clear_square(&display, 0, 0, SCREEN_WIDTH, 12);
+    char headerText[50];
+    if (headerMode == 0)
+    {
+        sprintf(headerText, "IP: %s", ip_str);
+    }
+    else
+    {
+        sprintf(headerText, "Espaco Sideral");
+    }
+    ssd1306_draw_string(&display, 0, 0, 1, headerText);
+    ssd1306_draw_line(&display, 0, 12, SCREEN_WIDTH, 12);
+
+    steps++;
+    if (steps % 100 == 0)
+    {
+        headerMode = !headerMode;
+    }
+
+    // Draw Bottom Bar
+    ssd1306_draw_line(&display, 0, SCREEN_HEIGHT - 12, SCREEN_WIDTH, SCREEN_HEIGHT - 12);
+    ssd1306_clear_square(&display, 0, SCREEN_HEIGHT - 10, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    // Draw Lives
+    char text[50];
+    sprintf(text, "Lives: %d", lives);
+    ssd1306_draw_string(&display, 0, SCREEN_HEIGHT - 8, 1, text);
+
+    // Draw Score
+    scoreDraw = scoreDraw < score ? scoreDraw + 10 : score;
+    sprintf(text, "Score: %d", scoreDraw);
+    ssd1306_draw_string(&display, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 8, 1, text);
+}
 
 int main()
 {
@@ -170,10 +266,19 @@ int main()
     initAnalog();
     initButtons(callbackFunction);
 
+    initWifi();
+    int connectTries = 0;
     int connected = 0;
-    while (!connected)
+    while (!connected && connectTries < 3)
     {
         connected = tryToConnect();
+        connectTries++;
+    }
+
+    if (!connected)
+    {
+        drawText("Disconnected");
+        strcpy(ip_str, "Disconnected");
     }
 
     sleep_ms(1000);
@@ -183,57 +288,32 @@ int main()
     while (true)
     {
         clearDisplay();
-        // Header
-        ssd1306_clear_square(&display, 0, 12, SCREEN_WIDTH, SCREEN_HEIGHT - 12);
-        if (headerMode == 0)
-        {
-            ssd1306_draw_string(&display, 0, 0, 1, ip_str);
-        }
-        else
-        {
-            ssd1306_draw_string(&display, 0, 0, 1, "Espaco Sideral");
-        }
-        ssd1306_draw_line(&display, 0, 12, SCREEN_WIDTH, 12);
 
-        steps++;
-        if (steps % 100 == 0)
-        {
-            headerMode = !headerMode;
-        }
+        gameState = 1; // Game
 
+        // Background
         moveStars();
         drawStars();
 
+        // Player
         int analog_x, analog_y;
         updateAxis(&analog_x, &analog_y);
         movePlayer(&player, analog_x, analog_y);
         drawPlayer(&player);
 
+        // Bullets
         updateBullets();
         drawBullets();
 
+        // Get score (temporary)
         if (player.x < 2)
         {
-            sendInfoToServer(1);
-            sleep_ms(5000);
+            score += rand() % 5 * 100;
         }
 
-        // Exibir timeShowing no canto da tela
-        ssd1306_draw_line(&display, 0, SCREEN_HEIGHT - 12, SCREEN_WIDTH, SCREEN_HEIGHT - 12);
-        ssd1306_clear_square(&display, 0, SCREEN_HEIGHT - 10, SCREEN_WIDTH, SCREEN_HEIGHT);
-
-        // Draw Lives
-        char text[50];
-        sprintf(text, "Lives: %d", timerShowing);
-        ssd1306_draw_string(&display, 0, SCREEN_HEIGHT - 8, 1, text);
-
-        // Draw Score
-        sprintf(text, "Score: %d", score);
-        ssd1306_draw_string(&display, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 8, 1, text);
-
-        timerShowing = timerShowing > 0 ? timerShowing - 1 : 0;
+        drawInterface();
 
         ssd1306_show(&display);
-        sleep_ms(30);
+        sleep_ms(STEP_CYCLE);
     }
 }
