@@ -9,8 +9,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "boundingBox.h"
+
 // Definição do Player (global)
-Player player = {SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2};
+Player player;
 
 // Definição das balas (global)
 Bullet bullets[MAX_BULLETS];
@@ -56,8 +58,10 @@ void drawBullets()
  */
 void initPlayer(Player *player)
 {
-    player->x = -40;
-    player->y = SCREEN_HEIGHT / 2;
+    player->box.x = -40;
+    player->box.y = SCREEN_HEIGHT / 2;
+    player->box.w = 14;
+    player->box.h = 6;
 }
 
 /**
@@ -68,31 +72,31 @@ void limitPlayerPosition(Player *player)
 {
     int limitY = 10;
 
-    if (player->x < 0)
-        player->x = 0;
-    if (player->x >= SCREEN_WIDTH)
-        player->x = SCREEN_WIDTH - 1;
-    if (player->y < limitY)
-        player->y = limitY;
-    if (player->y >= SCREEN_HEIGHT - limitY)
-        player->y = SCREEN_HEIGHT - 1 - limitY;
+    if (player->box.x < 0)
+        player->box.x = 0;
+    if (player->box.x >= SCREEN_WIDTH)
+        player->box.x = SCREEN_WIDTH - 1;
+    if (player->box.y < limitY)
+        player->box.y = limitY;
+    if (player->box.y >= SCREEN_HEIGHT - limitY)
+        player->box.y = SCREEN_HEIGHT - 1 - limitY;
 }
 
 void movePlayer(Player *player, int deltaX, int deltaY)
 {
-    player->x += deltaX / 2;
-    player->y += deltaY / 2;
+    player->box.x += deltaX / 2;
+    player->box.y += deltaY / 2;
 
     limitPlayerPosition(player);
 
-    printf("Player position: (%d, %d)\n", player->x, player->y);
+    printf("Player position: (%d, %d)\n", player->box.x, player->box.y);
 }
 
 void drawPlayer(Player *player)
 {
     char text[4] = "3=D";
     int textWidth = 5 * strlen(text); // Assumindo que a fonte padrão tem 5 pixels de largura
-    ssd1306_draw_string(&display, player->x - textWidth / 2, player->y, 1, text);
+    ssd1306_draw_string(&display, player->box.x - player->box.w / 2, player->box.y, 1, text);
 }
 
 void shoot(Player *player)
@@ -101,8 +105,8 @@ void shoot(Player *player)
     {
         if (!bullets[i].active)
         {
-            bullets[i].box.x = player->x + 10;
-            bullets[i].box.y = player->y;
+            bullets[i].box.x = player->box.x + 10;
+            bullets[i].box.y = player->box.y;
             bullets[i].box.w = 2;
             bullets[i].box.h = 6;
             bullets[i].dx = 4;

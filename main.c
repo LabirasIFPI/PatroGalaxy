@@ -194,6 +194,8 @@ int startProgress = 100; // 0 to 100
 int transitioningToState = -1;
 int playerSpawnTime = 30;
 int playerInvulnerableTimer = 90;
+int shootCooldown = 0;
+int titleScreenInitialized = 0;
 
 void changeGameState(int state)
 {
@@ -223,7 +225,18 @@ void callbackFunction(uint gpio, uint32_t events)
     case 1: // Game
         if (gpio == BTB)
         {
-            shoot(&player);
+            if (shootCooldown == 0)
+            {
+                shootCooldown = 6;
+                shoot(&player);
+            }
+        }
+        break;
+    case 2: // Game Over
+        if (gpio == BTB)
+        {
+            changeGameState(0);
+            titleScreenInitialized = 0;
         }
         break;
     default:
@@ -275,7 +288,7 @@ void drawInterface()
     // Draw Score
     scoreDraw = scoreDraw < score ? scoreDraw + 10 : score;
     sprintf(text, "Score: %d", scoreDraw);
-    ssd1306_draw_string(&display, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 8, 1, text);
+    ssd1306_draw_string(&display, SCREEN_WIDTH / 2 - 1, SCREEN_HEIGHT - 8, 1, text);
 }
 
 void drawTransition()
@@ -333,6 +346,39 @@ void checkBulletsCollisions()
     }
 }
 
+void playerDeath()
+{
+    lives--;
+    playerInvulnerableTimer = 90;
+    playerSpawnTime = 30;
+    player.box.x = -40;
+    player.box.y = SCREEN_HEIGHT / 2;
+
+    if (lives == 0)
+    {
+        changeGameState(2);
+    }
+}
+
+void checkPlayerCollision()
+{
+    // If player is invulnerable, don't check for collisions
+    if (playerInvulnerableTimer > 0)
+        return;
+
+    for (int i = 0; i < MAX_ASTEROIDS; i++)
+    {
+        if (asteroids[i].active)
+        {
+            if (checkCollision(&player.box, &asteroids[i].box))
+            {
+                playerDeath();
+                asteroids[i].active = 0;
+            }
+        }
+    }
+}
+
 int main()
 {
     stdio_init_all();
@@ -362,119 +408,159 @@ int main()
     initStars();
 
     gameState = 0; // Menu
-    int introTime = 0;
-    char patroName[50] = "PatroGalaxy";
 
-    int showPressStart = 0;
-    int pressStart = 0;
+    // Title Screen Variables
+    int introTime;
+    char patroName[50];
+    int showPressStart;
+    int pressStart;
+    float amplitude;
+    int _yAdd;
 
-    float amplitude = 8.0;
-    int _yAdd = 64;
-
-    // Title Screen
-    while (gameState == 0)
+    while (1)
     {
-        clearDisplay();
-        int ang = introTime * 6;
-        _yAdd = _yAdd > 0 ? _yAdd - 1 : 0;
-
-        // Background
-        moveStars();
-        drawStars();
-
-        // PatroGalaxy
-        for (int i = 0; i < strlen(patroName); i++)
+        // Title Screen
+        while (gameState == 0)
         {
-            char letter[2] = {patroName[i], '\0'};
-            int _x = 64 - 5 * strlen(patroName) / 2 + 5 * i;
-            int _y = SCREEN_HEIGHT / 2 + sin(ang + i * 60) * amplitude + _yAdd;
-            ssd1306_draw_char(&display, _x, _y, 1, letter[0]);
+            if (!titleScreenInitialized)
+            {
+                introTime = 0;
+                strcpy(patroName, "PatroGalaxy");
+                showPressStart = 0;
+                pressStart = 0;
+                amplitude = 8.0;
+                _yAdd = 64;
+                lives = 3;
+                score = 0;
+                scoreDraw = 0;
+                titleScreenInitialized = 1;
+                initPlayer(&player);
+            }
+            clearDisplay();
+            int ang = introTime * 6;
+            _yAdd = _yAdd > 0 ? _yAdd - 1 : 0;
+
+            // Background
+            moveStars();
+            drawStars();
+
+            // PatroGalaxy
+            for (int i = 0; i < strlen(patroName); i++)
+            {
+                char letter[2] = {patroName[i], '\0'};
+                int _x = 64 - 5 * strlen(patroName) / 2 + 5 * i;
+                int _y = SCREEN_HEIGHT / 2 + sin(ang + i * 60) * amplitude + _yAdd;
+                ssd1306_draw_char(&display, _x, _y, 1, letter[0]);
+            }
+
+            // Press Start
+            char startText[50];
+            sprintf(startText, "Press Start");
+            int _x = SCREEN_WIDTH / 2 - 5 * (strlen(startText) + 1) / 2;
+            int _y = SCREEN_HEIGHT - 10;
+            ssd1306_draw_string(&display, _x, _y, 1, showPressStart ? startText : "");
+
+            drawTransition();
+
+            introTime++;
+
+            amplitude = amplitude > 0 ? amplitude - 0.069 : 0;
+
+            if (introTime > 30 && amplitude == 0)
+            {
+                showPressStart = !showPressStart;
+                introTime = 0;
+            }
+
+            ssd1306_show(&display);
+            sleep_ms(STEP_CYCLE);
         }
 
-        // Press Start
-        char startText[50];
-        sprintf(startText, "Press Start");
-        int _x = SCREEN_WIDTH / 2 - 5 * (strlen(startText) + 1) / 2;
-        int _y = SCREEN_HEIGHT - 10;
-        ssd1306_draw_string(&display, _x, _y, 1, showPressStart ? startText : "");
+        initAsteroids();
 
-        drawTransition();
-
-        introTime++;
-
-        amplitude = amplitude > 0 ? amplitude - 0.069 : 0;
-
-        if (introTime > 30 && amplitude == 0)
+        // Game State
+        while (gameState == 1)
         {
-            showPressStart = !showPressStart;
-            introTime = 0;
+            clearDisplay();
+
+            gameState = 1; // Game
+
+            if (playerSpawnTime > 0)
+            {
+                player.box.x = -40 + (30 - playerSpawnTime) * 2;
+                playerSpawnTime--;
+            }
+            // Background
+            moveStars();
+            drawStars();
+
+            // Player
+            int canMove = (playerSpawnTime == 0);
+            if (canMove)
+            {
+                int analog_x, analog_y;
+                updateAxis(&analog_x, &analog_y);
+                movePlayer(&player, analog_x, analog_y);
+            }
+
+            checkPlayerCollision();
+            shootCooldown = shootCooldown > 0 ? shootCooldown - 1 : 0;
+            playerInvulnerableTimer = playerInvulnerableTimer > 0 ? playerInvulnerableTimer - 1 : 0;
+
+            if (playerInvulnerableTimer % 2 == 0)
+            {
+                drawPlayer(&player);
+            }
+
+            // Asteroids
+            if (getAsteroidsActive() < MAX_ASTEROIDS)
+            {
+                spawnAsteroid();
+            }
+
+            // Update game entities
+            moveAsteroids();
+            updateBullets();
+
+            checkBulletsCollisions();
+
+            // Draw game entities
+            drawAsteroids();
+            drawBullets();
+
+            // Get score (temporary)
+            if (player.box.x < 2)
+            {
+                // score += rand() % 5 * 100;
+            }
+
+            drawInterface();
+
+            drawTransition();
+
+            ssd1306_show(&display);
+            sleep_ms(STEP_CYCLE);
         }
 
-        ssd1306_show(&display);
-        sleep_ms(STEP_CYCLE);
-    }
-
-    initAsteroids();
-
-    // Game State
-    while (true)
-    {
-        clearDisplay();
-
-        gameState = 1; // Game
-
-        if (playerSpawnTime > 0)
+        // Game Over
+        while (gameState == 2)
         {
-            player.x = -40 + (30 - playerSpawnTime) * 2;
-            playerSpawnTime--;
+            clearDisplay();
+            char gameOverText[50];
+            sprintf(gameOverText, "Game Over");
+            int _x = SCREEN_WIDTH / 2 - 5 * (strlen(gameOverText) + 1) / 2;
+            int _y = SCREEN_HEIGHT / 2 - 6;
+            ssd1306_draw_string(&display, _x, _y, 1, "Game Over");
+
+            char scoreText[50];
+            sprintf(scoreText, "Score: %d", score);
+            _x = SCREEN_WIDTH / 2 - 5 * (strlen(scoreText) + 1) / 2;
+            _y = SCREEN_HEIGHT / 2 - 6 + 12;
+            ssd1306_draw_string(&display, _x, _y, 1, scoreText);
+
+            drawTransition();
+            ssd1306_show(&display);
+            sleep_ms(STEP_CYCLE);
         }
-        // Background
-        moveStars();
-        drawStars();
-
-        // Player
-        int canMove = (playerSpawnTime == 0);
-        if (canMove)
-        {
-            int analog_x, analog_y;
-            updateAxis(&analog_x, &analog_y);
-            movePlayer(&player, analog_x, analog_y);
-        }
-
-        playerInvulnerableTimer = playerInvulnerableTimer > 0 ? playerInvulnerableTimer - 1 : 0;
-
-        if (playerInvulnerableTimer % 2 == 0)
-        {
-            drawPlayer(&player);
-        }
-
-        // Asteroids
-        if (getAsteroidsActive() < MAX_ASTEROIDS)
-        {
-            spawnAsteroid();
-        }
-
-        // Update game entities
-        moveAsteroids();
-        updateBullets();
-
-        checkBulletsCollisions();
-
-        // Draw game entities
-        drawAsteroids();
-        drawBullets();
-
-        // Get score (temporary)
-        if (player.x < 2)
-        {
-            // score += rand() % 5 * 100;
-        }
-
-        drawInterface();
-
-        drawTransition();
-
-        ssd1306_show(&display);
-        sleep_ms(STEP_CYCLE);
     }
 }

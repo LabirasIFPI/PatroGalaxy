@@ -10,8 +10,7 @@
 // Estrutura do Player
 typedef struct
 {
-    int x;
-    int y;
+    BoundingBox box;
 } Player;
 
 // Esrtrutura da Bala
