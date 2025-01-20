@@ -7,6 +7,7 @@
 #include "utils.h"
 #include <math.h>
 #include <time.h>
+#include "saveSystem.h"
 
 // Project-specific imports
 #include "player.h"
@@ -187,7 +188,7 @@ void sendInfoToServer(int info) // Incomplete function
 int lives = 3;
 int score = 0;
 int scoreDraw = 0;
-int highScore = 0;
+uint16_t highScore = 0;
 int newHighScore = 0; // false
 int steps = 0;
 int headerMode = 1;      // 0 - Mostra IP, 1 - Mostra Nome do Level
@@ -200,6 +201,7 @@ int shootCooldown = 0;
 float gameSpeed = 1.0;
 int flashScreen = 0;
 int titleScreenInitialized = 0;
+int gameSaved = 0; // Variável de controle para impedir múltiplos salvamentos.
 
 void changeGameState(int state)
 {
@@ -317,7 +319,6 @@ void drawTransition()
     {
         gameState = transitioningToState;
         transitioningToState = -1;
-        return;
     }
 
     // Desenhar um retangulo cobrindo a tela com base no valor de startProgress
@@ -432,6 +433,22 @@ int main()
     float amplitude;
     int _yAdd;
 
+    // Tela de inicialização para evitar bugs ao resetar na tela de título.
+    clearDisplay();
+    ssd1306_draw_string(&display, 0, 0, 1, "Iniciando...");
+    ssd1306_show(&display);
+
+    if (!gpio_get(BTA))
+    {
+        clearDisplay();
+        ssd1306_draw_string(&display, 0, 0, 1, "Apagando dados...");
+        ssd1306_show(&display);
+        clearSaveData();
+        sleep_ms(120);
+    }
+
+    sleep_ms(169);
+
     while (1)
     {
         // Title Screen
@@ -449,9 +466,12 @@ int main()
                 score = 0;
                 scoreDraw = 0;
                 gameSpeed = 1.0;
-                titleScreenInitialized = 1;
                 newHighScore = 0;
                 initPlayer(&player);
+
+                // TODO: Carregar dados.
+
+                titleScreenInitialized = 1;
             }
             clearDisplay();
             int ang = introTime * 6;
@@ -478,6 +498,7 @@ int main()
             ssd1306_draw_string(&display, _x, _y, 1, showPressStart ? startText : "");
 
             // Draw Highscore
+            // if (highScore > 0 || 1)
             if (highScore > 0)
             {
                 char highScoreText[50];
@@ -558,12 +579,6 @@ int main()
             drawAsteroids();
             drawBullets();
 
-            // Get score (temporary)
-            if (player.box.x < 2)
-            {
-                // score += rand() % 5 * 100;
-            }
-
             drawInterface();
 
             drawTransition();
@@ -579,6 +594,7 @@ int main()
         // Game Over
         while (gameState == 2)
         {
+
             clearDisplay();
             char gameOverText[50];
             sprintf(gameOverText, "Game Over");
@@ -591,6 +607,11 @@ int main()
             {
                 newHighScore = 1;
                 highScore = score;
+                if (!gameSaved)
+                {
+                    saveProgress(&highScore);
+                    gameSaved = 1;
+                }
             }
 
             char scoreText[50];
