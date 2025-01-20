@@ -35,6 +35,3 @@ void drawStars()
         ssd1306_draw_pixel(&display, stars[i].x, stars[i].y);
     }
 }
-
-// Asteroides
-Asteroid asteroids[10];

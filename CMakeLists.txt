@@ -41,6 +41,7 @@ initialize.c
 player.c
 background.c
 utils.c
+asteroids.c
 )
 
 pico_set_program_name(PatroGalaxy "PatroGalaxy")

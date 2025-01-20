@@ -29,9 +29,9 @@ void updateBullets()
     {
         if (bullets[i].active)
         {
-            bullets[i].x += bullets[i].dx;
-            bullets[i].y += bullets[i].dy;
-            if (bullets[i].x < 0 || bullets[i].x >= SCREEN_WIDTH || bullets[i].y < 0 || bullets[i].y >= SCREEN_HEIGHT)
+            bullets[i].box.x += bullets[i].dx;
+            bullets[i].box.y += bullets[i].dy;
+            if (bullets[i].box.x < 0 || bullets[i].box.x >= SCREEN_WIDTH || bullets[i].box.y < 0 || bullets[i].box.y >= SCREEN_HEIGHT)
             {
                 bullets[i].active = 0;
             }
@@ -45,7 +45,7 @@ void drawBullets()
     {
         if (bullets[i].active)
         {
-            ssd1306_draw_char(&display, bullets[i].x, bullets[i].y, 1, '>');
+            ssd1306_draw_char(&display, bullets[i].box.x, bullets[i].box.y, 1, '>');
         }
     }
 }
@@ -56,7 +56,7 @@ void drawBullets()
  */
 void initPlayer(Player *player)
 {
-    player->x = SCREEN_WIDTH / 2;
+    player->x = -40;
     player->y = SCREEN_HEIGHT / 2;
 }
 
@@ -80,8 +80,8 @@ void limitPlayerPosition(Player *player)
 
 void movePlayer(Player *player, int deltaX, int deltaY)
 {
-    player->x += deltaX;
-    player->y += deltaY;
+    player->x += deltaX / 2;
+    player->y += deltaY / 2;
 
     limitPlayerPosition(player);
 
@@ -101,8 +101,10 @@ void shoot(Player *player)
     {
         if (!bullets[i].active)
         {
-            bullets[i].x = player->x + 10;
-            bullets[i].y = player->y;
+            bullets[i].box.x = player->x + 10;
+            bullets[i].box.y = player->y;
+            bullets[i].box.w = 2;
+            bullets[i].box.h = 6;
             bullets[i].dx = 4;
             bullets[i].dy = 0;
             bullets[i].active = 1;

@@ -3,8 +3,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "pico/stdlib.h"
+#include "boundingBox.h"
 
-#define MAX_BULLETS 10
+#define MAX_BULLETS 3
 
 // Estrutura do Player
 typedef struct
@@ -16,8 +17,7 @@ typedef struct
 // Esrtrutura da Bala
 typedef struct
 {
-    int x;
-    int y;
+    BoundingBox box;
     int dx;
     int dy;
     int active;
@@ -35,5 +35,6 @@ void shoot(Player *player);
 
 // Variável global para o Player
 extern Player player;
+extern Bullet bullets[MAX_BULLETS];
 
 #endif // PLAYER_H

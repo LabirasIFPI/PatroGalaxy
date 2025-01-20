@@ -11,6 +11,7 @@
 // Project-specific imports
 #include "player.h"
 #include "background.h"
+#include "asteroids.h"
 
 // Pico SDK imports
 #include "pico/stdlib.h"
@@ -243,7 +244,7 @@ void callbackFunction(uint gpio, uint32_t events)
 void drawInterface()
 {
     // Header
-    ssd1306_clear_square(&display, 0, 0, SCREEN_WIDTH, 8);
+    ssd1306_clear_square(&display, 0, 0, SCREEN_WIDTH, 9);
     char headerText[50];
     if (headerMode == 0)
     {
@@ -300,6 +301,36 @@ void drawTransition()
     int rectHeight = (SCREEN_HEIGHT * startProgress) / 100;
     ssd1306_clear_square(&display, 0, SCREEN_HEIGHT - rectHeight, SCREEN_WIDTH, rectHeight);
     ssd1306_show(&display);
+}
+
+int checkCollision(BoundingBox *a, BoundingBox *b)
+{
+    return (a->x - a->w / 2 < b->x + b->w / 2 &&
+            a->x + a->w / 2 > b->x - b->w / 2 &&
+            a->y - a->h / 2 < b->y + b->h / 2 &&
+            a->y + a->h / 2 > b->y - b->h / 2);
+}
+
+void checkBulletsCollisions()
+{
+    for (int i = 0; i < MAX_BULLETS; i++)
+    {
+        if (bullets[i].active)
+        {
+            for (int j = 0; j < MAX_ASTEROIDS; j++)
+            {
+                if (asteroids[j].active)
+                {
+                    if (checkCollision(&bullets[i].box, &asteroids[j].box))
+                    {
+                        bullets[i].active = 0;
+                        asteroids[j].active = 0;
+                        score += 100;
+                    }
+                }
+            }
+        }
+    }
 }
 
 int main()
@@ -383,6 +414,8 @@ int main()
         sleep_ms(STEP_CYCLE);
     }
 
+    initAsteroids();
+
     // Game State
     while (true)
     {
@@ -415,8 +448,20 @@ int main()
             drawPlayer(&player);
         }
 
-        // Bullets
+        // Asteroids
+        if (getAsteroidsActive() < MAX_ASTEROIDS)
+        {
+            spawnAsteroid();
+        }
+
+        // Update game entities
+        moveAsteroids();
         updateBullets();
+
+        checkBulletsCollisions();
+
+        // Draw game entities
+        drawAsteroids();
         drawBullets();
 
         // Get score (temporary)
