@@ -192,6 +192,7 @@ int gameState = 0;       // 0 - Menu, 1 - Game, 2 - Game Over
 int startProgress = 100; // 0 to 100
 int transitioningToState = -1;
 int playerSpawnTime = 30;
+int playerInvulnerableTimer = 90;
 
 void changeGameState(int state)
 {
@@ -242,7 +243,7 @@ void callbackFunction(uint gpio, uint32_t events)
 void drawInterface()
 {
     // Header
-    ssd1306_clear_square(&display, 0, 0, SCREEN_WIDTH, 12);
+    ssd1306_clear_square(&display, 0, 0, SCREEN_WIDTH, 8);
     char headerText[50];
     if (headerMode == 0)
     {
@@ -253,7 +254,7 @@ void drawInterface()
         sprintf(headerText, "Espaco Sideral");
     }
     ssd1306_draw_string(&display, 0, 0, 1, headerText);
-    ssd1306_draw_line(&display, 0, 12, SCREEN_WIDTH, 12);
+    ssd1306_draw_line(&display, 0, 9, SCREEN_WIDTH, 9);
 
     steps++;
     if (steps % 100 == 0)
@@ -262,7 +263,7 @@ void drawInterface()
     }
 
     // Draw Bottom Bar
-    ssd1306_draw_line(&display, 0, SCREEN_HEIGHT - 12, SCREEN_WIDTH, SCREEN_HEIGHT - 12);
+    ssd1306_draw_line(&display, 0, SCREEN_HEIGHT - 11, SCREEN_WIDTH, SCREEN_HEIGHT - 11);
     ssd1306_clear_square(&display, 0, SCREEN_HEIGHT - 10, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     // Draw Lives
@@ -338,6 +339,8 @@ int main()
 
     float amplitude = 8.0;
     int _yAdd = 64;
+
+    // Title Screen
     while (gameState == 0)
     {
         clearDisplay();
@@ -389,7 +392,7 @@ int main()
 
         if (playerSpawnTime > 0)
         {
-            player.x = -30 + (30 - playerSpawnTime) * 2;
+            player.x = -40 + (30 - playerSpawnTime) * 2;
             playerSpawnTime--;
         }
         // Background
@@ -404,7 +407,13 @@ int main()
             updateAxis(&analog_x, &analog_y);
             movePlayer(&player, analog_x, analog_y);
         }
-        drawPlayer(&player);
+
+        playerInvulnerableTimer = playerInvulnerableTimer > 0 ? playerInvulnerableTimer - 1 : 0;
+
+        if (playerInvulnerableTimer % 2 == 0)
+        {
+            drawPlayer(&player);
+        }
 
         // Bullets
         updateBullets();

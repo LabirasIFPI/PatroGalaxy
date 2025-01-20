@@ -66,7 +66,7 @@ void initPlayer(Player *player)
  */
 void limitPlayerPosition(Player *player)
 {
-    int limitY = 12;
+    int limitY = 10;
 
     if (player->x < 0)
         player->x = 0;
