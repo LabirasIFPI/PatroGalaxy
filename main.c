@@ -187,10 +187,11 @@ int lives = 3;
 int score = 0;
 int scoreDraw = 0;
 int steps = 0;
-int headerMode = 1;    // 0 - Mostra IP, 1 - Mostra Nome do Level
-int gameState = 0;     // 0 - Menu, 1 - Game, 2 - Game Over
-int startProgress = 0; // 0 to 100
+int headerMode = 1;      // 0 - Mostra IP, 1 - Mostra Nome do Level
+int gameState = 0;       // 0 - Menu, 1 - Game, 2 - Game Over
+int startProgress = 100; // 0 to 100
 int transitioningToState = -1;
+int playerSpawnTime = 30;
 
 void changeGameState(int state)
 {
@@ -282,6 +283,10 @@ void drawTransition()
         return;
     }
     startProgress += 6 * (1 - (2 * (transitioningToState == -1)));
+
+    // Limit values between 0 and 100
+    startProgress = startProgress > 100 ? 100 : startProgress;
+    startProgress = startProgress < 0 ? 0 : startProgress;
 
     if (startProgress >= 100 && transitioningToState != -1)
     {
@@ -382,14 +387,23 @@ int main()
 
         gameState = 1; // Game
 
+        if (playerSpawnTime > 0)
+        {
+            player.x = -30 + (30 - playerSpawnTime) * 2;
+            playerSpawnTime--;
+        }
         // Background
         moveStars();
         drawStars();
 
         // Player
-        int analog_x, analog_y;
-        updateAxis(&analog_x, &analog_y);
-        movePlayer(&player, analog_x, analog_y);
+        int canMove = (playerSpawnTime == 0);
+        if (canMove)
+        {
+            int analog_x, analog_y;
+            updateAxis(&analog_x, &analog_y);
+            movePlayer(&player, analog_x, analog_y);
+        }
         drawPlayer(&player);
 
         // Bullets
@@ -399,7 +413,7 @@ int main()
         // Get score (temporary)
         if (player.x < 2)
         {
-            score += rand() % 5 * 100;
+            // score += rand() % 5 * 100;
         }
 
         drawInterface();

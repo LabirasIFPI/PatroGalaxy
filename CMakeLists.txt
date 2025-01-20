@@ -28,14 +28,14 @@ set(PICO_BOARD pico_w CACHE STRING "Board type")
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
 
-project(Patrowifi C CXX ASM)
+project(PatroGalaxy C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(Patrowifi main.c 
+add_executable(PatroGalaxy main.c 
 lib/pico-ssd1306/ssd1306.c
 initialize.c
 player.c
@@ -43,33 +43,32 @@ background.c
 utils.c
 )
 
-pico_set_program_name(Patrowifi "Patrowifi")
-pico_set_program_version(Patrowifi "0.1")
+pico_set_program_name(PatroGalaxy "PatroGalaxy")
+pico_set_program_version(PatroGalaxy "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(Patrowifi 0)
-pico_enable_stdio_usb(Patrowifi 1)
+pico_enable_stdio_uart(PatroGalaxy 0)
+pico_enable_stdio_usb(PatroGalaxy 1)
 
 # Include the library path
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/lib/pico-ssd1306") 
 
 # Add the standard library to the build
-target_link_libraries(Patrowifi
+target_link_libraries(PatroGalaxy
         pico_stdlib)
 
 # Add the standard include files to the build
-target_include_directories(Patrowifi PRIVATE
+target_include_directories(PatroGalaxy PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/lib/pico-ssd1306
 )
 
 # Add any user requested libraries
-target_link_libraries(Patrowifi 
+target_link_libraries(PatroGalaxy 
         hardware_i2c
         hardware_adc
         pico-ssd1306
         pico_cyw43_arch_lwip_threadsafe_background
         )
 
-pico_add_extra_outputs(Patrowifi)
-
+pico_add_extra_outputs(PatroGalaxy)
