@@ -72,14 +72,17 @@ void limitPlayerPosition(Player *player)
 {
     int limitY = 10;
 
-    if (player->box.x < 0)
-        player->box.x = 0;
-    if (player->box.x >= SCREEN_WIDTH)
-        player->box.x = SCREEN_WIDTH - 1;
-    if (player->box.y < limitY)
-        player->box.y = limitY;
-    if (player->box.y >= SCREEN_HEIGHT - limitY)
-        player->box.y = SCREEN_HEIGHT - 1 - limitY;
+    // Limitar posição no eixo X
+    if (player->box.x - player->box.w / 2 < 0)
+        player->box.x = player->box.w / 2;
+    if (player->box.x + player->box.w / 2 >= SCREEN_WIDTH)
+        player->box.x = SCREEN_WIDTH - player->box.w / 2;
+
+    // Limitar posição no eixo Y
+    if (player->box.y - player->box.h / 2 < limitY)
+        player->box.y = limitY + player->box.h / 2;
+    if (player->box.y + player->box.h / 2 >= SCREEN_HEIGHT - limitY)
+        player->box.y = SCREEN_HEIGHT - limitY - player->box.h / 2;
 }
 
 void movePlayer(Player *player, int deltaX, int deltaY)

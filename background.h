@@ -13,7 +13,7 @@ typedef struct
 
 // Declarações das funções
 void initStars();
-void moveStars();
+void moveStars(float starsSpeed);
 void drawStars();
 
 // Variáveis globais

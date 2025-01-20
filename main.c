@@ -187,6 +187,8 @@ void sendInfoToServer(int info) // Incomplete function
 int lives = 3;
 int score = 0;
 int scoreDraw = 0;
+int highScore = 0;
+int newHighScore = 0; // false
 int steps = 0;
 int headerMode = 1;      // 0 - Mostra IP, 1 - Mostra Nome do Level
 int gameState = 0;       // 0 - Menu, 1 - Game, 2 - Game Over
@@ -195,6 +197,8 @@ int transitioningToState = -1;
 int playerSpawnTime = 30;
 int playerInvulnerableTimer = 90;
 int shootCooldown = 0;
+float gameSpeed = 1.0;
+int flashScreen = 0;
 int titleScreenInitialized = 0;
 
 void changeGameState(int state)
@@ -261,7 +265,8 @@ void drawInterface()
     char headerText[50];
     if (headerMode == 0)
     {
-        sprintf(headerText, "IP: %s", ip_str);
+        // sprintf(headerText, "IP: %s", ip_str);
+        sprintf(headerText, "High Score: %d", highScore);
     }
     else
     {
@@ -274,6 +279,11 @@ void drawInterface()
     if (steps % 100 == 0)
     {
         headerMode = !headerMode;
+    }
+    // If there is no high score, do not show header 0.
+    if (highScore <= 0)
+    {
+        headerMode = 1;
     }
 
     // Draw Bottom Bar
@@ -295,7 +305,7 @@ void drawTransition()
 {
     if (transitioningToState == -1 && startProgress == 0)
     {
-        return;
+        // return;
     }
     startProgress += 6 * (1 - (2 * (transitioningToState == -1)));
 
@@ -312,8 +322,11 @@ void drawTransition()
 
     // Desenhar um retangulo cobrindo a tela com base no valor de startProgress
     int rectHeight = (SCREEN_HEIGHT * startProgress) / 100;
+    if (startProgress >= 100)
+    {
+        rectHeight = SCREEN_HEIGHT;
+    }
     ssd1306_clear_square(&display, 0, SCREEN_HEIGHT - rectHeight, SCREEN_WIDTH, rectHeight);
-    ssd1306_show(&display);
 }
 
 int checkCollision(BoundingBox *a, BoundingBox *b)
@@ -353,6 +366,8 @@ void playerDeath()
     playerSpawnTime = 30;
     player.box.x = -40;
     player.box.y = SCREEN_HEIGHT / 2;
+
+    flashScreen = 2;
 
     if (lives == 0)
     {
@@ -433,7 +448,9 @@ int main()
                 lives = 3;
                 score = 0;
                 scoreDraw = 0;
+                gameSpeed = 1.0;
                 titleScreenInitialized = 1;
+                newHighScore = 0;
                 initPlayer(&player);
             }
             clearDisplay();
@@ -441,7 +458,7 @@ int main()
             _yAdd = _yAdd > 0 ? _yAdd - 1 : 0;
 
             // Background
-            moveStars();
+            moveStars(1.0);
             drawStars();
 
             // PatroGalaxy
@@ -459,6 +476,16 @@ int main()
             int _x = SCREEN_WIDTH / 2 - 5 * (strlen(startText) + 1) / 2;
             int _y = SCREEN_HEIGHT - 10;
             ssd1306_draw_string(&display, _x, _y, 1, showPressStart ? startText : "");
+
+            // Draw Highscore
+            if (highScore > 0)
+            {
+                char highScoreText[50];
+                sprintf(highScoreText, "Highscore: %d", highScore);
+                _x = SCREEN_WIDTH / 2 - 5 * (strlen(highScoreText) + 1) / 2;
+                _y = -8 + 15 - MIN(15, _yAdd);
+                ssd1306_draw_string(&display, _x, _y, 1, highScoreText);
+            }
 
             drawTransition();
 
@@ -485,13 +512,16 @@ int main()
 
             gameState = 1; // Game
 
+            // A cada intervalo de pontos, aumenta a velocidade do jogo
+            gameSpeed = 1.0 + (score / (300.0 + 100.0 * gameSpeed));
+
             if (playerSpawnTime > 0)
             {
                 player.box.x = -40 + (30 - playerSpawnTime) * 2;
                 playerSpawnTime--;
             }
             // Background
-            moveStars();
+            moveStars(gameSpeed);
             drawStars();
 
             // Player
@@ -513,13 +543,13 @@ int main()
             }
 
             // Asteroids
-            if (getAsteroidsActive() < MAX_ASTEROIDS)
+            if (getAsteroidsActive() < MIN(3 + gameSpeed / 4, MAX_ASTEROIDS))
             {
                 spawnAsteroid();
             }
 
             // Update game entities
-            moveAsteroids();
+            moveAsteroids(1 + gameSpeed / 4);
             updateBullets();
 
             checkBulletsCollisions();
@@ -538,6 +568,10 @@ int main()
 
             drawTransition();
 
+            flashScreen = flashScreen > 0 ? flashScreen - 1 : 0;
+
+            ssd1306_invert(&display, flashScreen);
+
             ssd1306_show(&display);
             sleep_ms(STEP_CYCLE);
         }
@@ -552,15 +586,34 @@ int main()
             int _y = SCREEN_HEIGHT / 2 - 6;
             ssd1306_draw_string(&display, _x, _y, 1, "Game Over");
 
+            // Check high score
+            if (score > highScore)
+            {
+                newHighScore = 1;
+                highScore = score;
+            }
+
             char scoreText[50];
             sprintf(scoreText, "Score: %d", score);
             _x = SCREEN_WIDTH / 2 - 5 * (strlen(scoreText) + 1) / 2;
             _y = SCREEN_HEIGHT / 2 - 6 + 12;
             ssd1306_draw_string(&display, _x, _y, 1, scoreText);
 
+            if (newHighScore)
+            {
+                char newRecordText[50];
+                sprintf(newRecordText, "New record!");
+                _x = SCREEN_WIDTH / 2 - 5 * (strlen(newRecordText) + 1) / 2;
+                _y = SCREEN_HEIGHT / 2 - 6 + 24;
+                ssd1306_draw_string(&display, _x, _y, 1, newRecordText);
+            }
+
             drawTransition();
             ssd1306_show(&display);
             sleep_ms(STEP_CYCLE);
         }
+
+        clearDisplay();
+        ssd1306_show(&display);
     }
 }

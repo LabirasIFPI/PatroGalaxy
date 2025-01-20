@@ -16,13 +16,13 @@ typedef struct
 
 // Asteroid functions
 void initAsteroids();
-void moveAsteroids();
+void moveAsteroids(float asteroidsSpeed);
 void drawAsteroids();
 void spawnAsteroid();
 int getAsteroidsActive();
 
 // Variável global para os asteroides
-#define MAX_ASTEROIDS 3
+#define MAX_ASTEROIDS 10
 extern Asteroid asteroids[MAX_ASTEROIDS];
 
 #endif // ASTEROIDS_H

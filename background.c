@@ -15,11 +15,11 @@ void initStars()
     }
 }
 
-void moveStars()
+void moveStars(float starsSpeed)
 {
     for (int i = 0; i < 10; i++)
     {
-        stars[i].x -= STARS_SPEED;
+        stars[i].x -= starsSpeed;
         if (stars[i].x < 0)
         {
             stars[i].x = SCREEN_WIDTH;

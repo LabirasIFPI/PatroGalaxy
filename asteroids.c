@@ -13,25 +13,25 @@ void initAsteroids()
     for (int i = 0; i < MAX_ASTEROIDS; i++)
     {
         asteroids[i].box.x = SCREEN_WIDTH + (rand() % 100);
-        asteroids[i].box.y = rand() % SCREEN_HEIGHT;
-        asteroids[i].box.w = 8; // Largura dos asteroides
-        asteroids[i].box.h = 8; // Altura dos asteroides
-        asteroids[i].dx = -1;   // Velocidade em x
-        asteroids[i].dy = 0;    // Velocidade em y
+        asteroids[i].box.y = 8 + rand() % (SCREEN_HEIGHT - 8); // Posição aleatória em y
+        asteroids[i].box.w = 8;                                // Largura dos asteroides
+        asteroids[i].box.h = 8;                                // Altura dos asteroides
+        asteroids[i].dx = -1;                                  // Velocidade em x
+        asteroids[i].dy = 0;                                   // Velocidade em y
         asteroids[i].angle = rand() % 360;
         // asteroids[i].dy = (rand() % 3) - 1; // Velocidade em y (-1, 0, 1)
-        asteroids[i].active = 1; // Ativar o asteroide
+        asteroids[i].active = (i < 3); // Ativar os 3 primeiros asteroides.
     }
 }
 
-void moveAsteroids()
+void moveAsteroids(float asteroidsSpeed)
 {
     for (int i = 0; i < MAX_ASTEROIDS; i++)
     {
         if (asteroids[i].active)
         {
-            asteroids[i].box.x += asteroids[i].dx;
-            asteroids[i].box.y += asteroids[i].dy;
+            asteroids[i].box.x += asteroids[i].dx * asteroidsSpeed;
+            asteroids[i].box.y += asteroids[i].dy * asteroidsSpeed;
 
             asteroids[i].angle += 3;
             asteroids[i].angle = asteroids[i].angle % 360;
@@ -107,7 +107,7 @@ void spawnAsteroid()
         if (!asteroids[i].active)
         {
             asteroids[i].box.x = SCREEN_WIDTH + 32;
-            asteroids[i].box.y = rand() % SCREEN_HEIGHT;
+            asteroids[i].box.y = 8 + rand() % (SCREEN_HEIGHT - 8);
             asteroids[i].box.w = 8;
             asteroids[i].box.h = 8;
             asteroids[i].dx = -1;
