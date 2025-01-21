@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "boundingBox.h"
 
@@ -62,6 +63,15 @@ void initPlayer(Player *player)
     player->box.y = SCREEN_HEIGHT / 2;
     player->box.w = 14;
     player->box.h = 6;
+
+    // Inicializar partículas
+    for (int i = 0; i < MAX_PARTICLES; i++)
+    {
+        player->particles[i].x = player->box.x;
+        player->particles[i].y = player->box.y;
+        player->particles[i].dx = -1;
+        player->particles[i].time = 0;
+    }
 }
 
 /**
@@ -92,14 +102,36 @@ void movePlayer(Player *player, int deltaX, int deltaY)
 
     limitPlayerPosition(player);
 
-    printf("Player position: (%d, %d)\n", player->box.x, player->box.y);
+    // Update Particles
+
+    // printf("Player position: (%d, %d)\n", player->box.x, player->box.y);
 }
 
 void drawPlayer(Player *player)
 {
-    char text[4] = "3=D";
+    char text[4] = "]=D";
     int textWidth = 5 * strlen(text); // Assumindo que a fonte padrão tem 5 pixels de largura
     ssd1306_draw_string(&display, player->box.x - player->box.w / 2, player->box.y, 1, text);
+
+    // Draw Particles
+    for (int i = 0; i < MAX_PARTICLES; i++)
+    {
+        if (player->particles[i].time >= 0)
+        {
+            ssd1306_draw_pixel(&display, player->particles[i].x, player->particles[i].y);
+            player->particles[i].x += player->particles[i].dx;
+            player->particles[i].time--;
+
+            // Reset particle upon reaching time limit
+            if (player->particles[i].time <= 0)
+            {
+                player->particles[i].x = player->box.x - player->box.w / 2;
+                player->particles[i].y = player->box.y + rand() % 5;
+                player->particles[i].dx = -1 - rand() % 2;
+                player->particles[i].time = 8 + rand() % 4;
+            }
+        }
+    }
 }
 
 void shoot(Player *player)

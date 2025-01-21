@@ -6,11 +6,21 @@
 #include "boundingBox.h"
 
 #define MAX_BULLETS 3
+#define MAX_PARTICLES 10
+
+typedef struct
+{
+    int x;
+    int y;
+    int dx;
+    int time;
+} ShipParticle;
 
 // Estrutura do Player
 typedef struct
 {
     BoundingBox box;
+    ShipParticle particles[10]; // Array of particles
 } Player;
 
 // Esrtrutura da Bala
