@@ -8,6 +8,7 @@ void saveProgress(uint8_t *progressString)
     flash_range_erase(FLASH_TARGET_OFFSET, FLASH_SECTOR_SIZE);
     flash_range_program(FLASH_TARGET_OFFSET, progressString, FLASH_PAGE_SIZE);
     restore_interrupts(interruptions);
+    printf("Game saved\n");
 }
 
 void loadProgress(uint8_t *buffer, size_t tamanho)
@@ -36,4 +37,3 @@ void loadBuffer(uint8_t *buffer, uint16_t *highscore)
 {
     *highscore = (buffer[0] << 8) | buffer[1];
 }
-
