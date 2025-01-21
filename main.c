@@ -223,6 +223,21 @@ void callbackFunction(uint gpio, uint32_t events)
     switch (gameState)
     {
     case 0:
+        if (gpio == BTA)
+        {
+            // Criar buffer de salvamento
+            uint8_t buffer[2];
+
+            // Alimentar buffer
+            highScore = rand() % 1000;
+            printf("Highscore: %d\n", highScore);
+            createBuffer(highScore, &buffer);
+
+            // Salvar buffer
+            saveProgress(&buffer);
+
+            printf("Saved progress\n");
+        }
         if (gpio == BTB)
         {
             changeGameState(1);
@@ -423,7 +438,7 @@ int main()
 
     initStars();
 
-    gameState = 0; // Menu
+    gameState = -1; // Inicialização
 
     // Title Screen Variables
     int introTime;
@@ -438,16 +453,19 @@ int main()
     ssd1306_draw_string(&display, 0, 0, 1, "Iniciando...");
     ssd1306_show(&display);
 
+    // Apagar dados ao pressionar o botão A
     if (!gpio_get(BTA))
     {
         clearDisplay();
         ssd1306_draw_string(&display, 0, 0, 1, "Apagando dados...");
         ssd1306_show(&display);
         clearSaveData();
-        sleep_ms(120);
+        sleep_ms(2069);
     }
 
     sleep_ms(169);
+
+    gameState = 0;
 
     while (1)
     {
@@ -469,7 +487,10 @@ int main()
                 newHighScore = 0;
                 initPlayer(&player);
 
-                // TODO: Carregar dados.
+                // Carregar Dados
+                uint8_t buffer[2];
+                loadProgress(buffer, 2);
+                loadBuffer(buffer, &highScore);
 
                 titleScreenInitialized = 1;
             }
@@ -498,8 +519,8 @@ int main()
             ssd1306_draw_string(&display, _x, _y, 1, showPressStart ? startText : "");
 
             // Draw Highscore
-            // if (highScore > 0 || 1)
-            if (highScore > 0)
+            if (highScore > 0 || 1)
+            // if (highScore > 0)
             {
                 char highScoreText[50];
                 sprintf(highScoreText, "Highscore: %d", highScore);
@@ -609,7 +630,11 @@ int main()
                 highScore = score;
                 if (!gameSaved)
                 {
-                    saveProgress(&highScore);
+                    // Criar um buffer para guardar o highscore
+                    uint8_t buffer[2];
+                    createBuffer(highScore, buffer);
+                    saveProgress(buffer);
+
                     gameSaved = 1;
                 }
             }
