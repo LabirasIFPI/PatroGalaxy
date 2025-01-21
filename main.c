@@ -94,6 +94,7 @@ int initWifi()
 
 // IP address string
 char ip_str[16];
+int connected = 0;
 
 /**
  * @brief Attempts to connect to a Wi-Fi network using predefined SSID and password.
@@ -123,6 +124,7 @@ int tryToConnect()
         snprintf(ip_str, sizeof(ip_str), "%d.%d.%d.%d", ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
         printf("IP address %s\n", ip_str);
         drawText(ip_str);
+        connected = 1;
         return 1;
     }
 }
@@ -243,6 +245,14 @@ void callbackFunction(uint gpio, uint32_t events)
         {
             changeGameState(1);
         }
+        if (gpio == BTA)
+        {
+            // Se estiver conectado, mudar para o estado de teste de comunicação
+            if (connected)
+            {
+                changeGameState(3);
+            }
+        }
         break;
     case 1: // Game
         if (gpio == BTB)
@@ -253,12 +263,22 @@ void callbackFunction(uint gpio, uint32_t events)
                 shoot(&player);
             }
         }
-        break;
+    break;
     case 2: // Game Over
         if (gpio == BTB)
         {
             changeGameState(0);
             titleScreenInitialized = 0;
+        }
+        break;
+    case 3: // Communication Test
+        if (gpio == BTA)
+        {
+            sendInfoToServer(42);
+        }
+        if (gpio == BTB)
+        {
+            changeGameState(0);
         }
         break;
     default:
@@ -430,6 +450,8 @@ void checkPlayerCollision()
 
 int main()
 {
+    sleep_ms(69);
+
     stdio_init_all();
 
     initI2C();
@@ -475,6 +497,7 @@ int main()
         {
             drawText("Disconnected");
             strcpy(ip_str, "Disconnected");
+            connected = 0;
         }
 
         sleep_ms(2069);
@@ -555,7 +578,7 @@ int main()
             }
 
             // Draw IP if connected
-            if (strcmp(ip_str, "Disconnected") != 0)
+            if (connected)
             {
                 char ipText[50];
                 sprintf(ipText, "IP: %s", ip_str);
@@ -678,6 +701,22 @@ int main()
             sleep_ms(STEP_CYCLE);
         }
 
+        // Communication Test
+        while (gameState == 3)
+        {
+            clearDisplay();
+            ssd1306_invert(&display, 1);
+
+            // Desenhar IP:
+            char ipText[50];
+            sprintf(ipText, "IP: %s", ip_str);
+            int _x = SCREEN_WIDTH - 5 * (strlen(ipText) + 1) - 2;
+            int _y = SCREEN_HEIGHT - 7;
+            ssd1306_draw_string(&display, _x, _y, 1, ipText);
+
+            drawTransition();
+            sleep_ms(STEP_CYCLE);
+        }
         clearDisplay();
         ssd1306_show(&display);
     }
