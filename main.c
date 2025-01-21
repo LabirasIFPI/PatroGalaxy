@@ -243,7 +243,8 @@ void callbackFunction(uint gpio, uint32_t events)
         // }
         if (gpio == BTB)
         {
-            changeGameState(1);
+            if (transitioningToState == -1)
+                changeGameState(1);
         }
         if (gpio == BTA)
         {
@@ -263,12 +264,15 @@ void callbackFunction(uint gpio, uint32_t events)
                 shoot(&player);
             }
         }
-    break;
+        break;
     case 2: // Game Over
         if (gpio == BTB)
         {
-            changeGameState(0);
-            titleScreenInitialized = 0;
+            if (transitioningToState == -1)
+            {
+                changeGameState(0);
+                titleScreenInitialized = 0;
+            }
         }
         break;
     case 3: // Communication Test
@@ -670,11 +674,23 @@ int main()
             sleep_ms(STEP_CYCLE);
         }
 
+        int gameOverTime = 0;
         // Game Over
         while (gameState == 2)
         {
-
             clearDisplay();
+
+            // Background
+            if (gameOverTime > 0)
+            {
+                ssd1306_draw_line(&display, 0, gameOverTime, SCREEN_WIDTH, gameOverTime);
+            }
+            gameOverTime++;
+            gameOverTime = gameOverTime > SCREEN_HEIGHT ? -16 : gameOverTime;
+
+            ssd1306_clear_square(&display, 24, 22, SCREEN_WIDTH - 48, SCREEN_HEIGHT - 38);
+
+            // Game Over Text
             char gameOverText[50];
             sprintf(gameOverText, "Game Over");
             int _x = SCREEN_WIDTH / 2 - 5 * (strlen(gameOverText) + 1) / 2;
