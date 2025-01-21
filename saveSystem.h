@@ -5,7 +5,7 @@
 #include "hardware/flash.h"
 #include "hardware/sync.h"
 
-#define FLASH_TARGET_OFFSET (256 * 1024)
+#define FLASH_TARGET_OFFSET (512 * 1024)
 
 void saveProgress(uint8_t *progressString);
 void loadProgress(uint8_t *buffer, size_t tamanho);

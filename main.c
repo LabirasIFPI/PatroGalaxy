@@ -108,7 +108,7 @@ int tryToConnect()
 {
     printf("Connecting to Wi-Fi...\n");
     drawText("Connecting to Wi-Fi...");
-    if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 8000))
+    if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 12000))
     {
         printf("failed to connect.\n");
         drawText("Failed to connect");
@@ -439,21 +439,6 @@ int main()
     initAnalog();
     initButtons(callbackFunction);
 
-    // initWifi();
-    // int connectTries = 0;
-    // int connected = 0;
-    // while (!connected && connectTries < 3)
-    // {
-    //     connected = tryToConnect();
-    //     connectTries++;
-    // }
-
-    // if (!connected)
-    // {
-    //     drawText("Disconnected");
-    //     strcpy(ip_str, "Disconnected");
-    // }
-
     initStars();
 
     gameState = -1; // Inicialização
@@ -471,6 +456,30 @@ int main()
     ssd1306_draw_string(&display, 0, 0, 1, "Iniciando...");
     ssd1306_show(&display);
 
+    sleep_ms(169);
+
+    // Conectar ao Wi-fi ao pressionar o botão B:
+    if (!gpio_get(BTB))
+    {
+        initWifi();
+        int connectTries = 0;
+        int connected = 0;
+        while (!connected && connectTries < 2)
+        {
+            connected = tryToConnect();
+            connectTries++;
+            sleep_ms(1000);
+        }
+
+        if (!connected)
+        {
+            drawText("Disconnected");
+            strcpy(ip_str, "Disconnected");
+        }
+
+        sleep_ms(2069);
+    }
+
     // Apagar dados ao pressionar o botão A
     if (!gpio_get(BTA))
     {
@@ -480,8 +489,6 @@ int main()
         clearSaveData();
         sleep_ms(2069);
     }
-
-    sleep_ms(169);
 
     gameState = 0;
 
@@ -545,6 +552,16 @@ int main()
                 _x = SCREEN_WIDTH / 2 - 5 * (strlen(highScoreText) + 1) / 2;
                 _y = -8 + 15 - MIN(15, _yAdd);
                 ssd1306_draw_string(&display, _x, _y, 1, highScoreText);
+            }
+
+            // Draw IP if connected
+            if (strcmp(ip_str, "Disconnected") != 0)
+            {
+                char ipText[50];
+                sprintf(ipText, "IP: %s", ip_str);
+                _x = SCREEN_WIDTH / 2 - 5 * (strlen(ipText) + 1) / 2;
+                _y = -8 + 30 - MIN(30, _yAdd);
+                ssd1306_draw_string(&display, _x, _y, 1, ip_str);
             }
 
             drawTransition();
