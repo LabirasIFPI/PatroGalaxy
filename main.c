@@ -683,12 +683,21 @@ int main()
             // Background
             if (gameOverTime > 0)
             {
-                ssd1306_draw_line(&display, 0, gameOverTime, SCREEN_WIDTH, gameOverTime);
             }
+            ssd1306_draw_square(&display, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
             gameOverTime++;
             gameOverTime = gameOverTime > SCREEN_HEIGHT ? -16 : gameOverTime;
 
-            ssd1306_clear_square(&display, 24, 22, SCREEN_WIDTH - 48, SCREEN_HEIGHT - 38);
+            // TODO: Desenhar quadrados verticais para apagar as linhas, dando um efeito visual melhor.
+            ssd1306_clear_square(&display, 8, 0, 2, SCREEN_HEIGHT);
+            ssd1306_clear_square(&display, 16, 0, 2, SCREEN_HEIGHT);
+            ssd1306_clear_square(&display, 20, 0, 2, SCREEN_HEIGHT);
+
+            ssd1306_clear_square(&display, SCREEN_WIDTH - 20 - 1, 0, 2, SCREEN_HEIGHT);
+            ssd1306_clear_square(&display, SCREEN_WIDTH - 16 - 1, 0, 2, SCREEN_HEIGHT);
+            ssd1306_clear_square(&display, SCREEN_WIDTH - 8 - 1, 0, 2, SCREEN_HEIGHT);
+
+            ssd1306_clear_square(&display, 24, 0, SCREEN_WIDTH - 48, SCREEN_HEIGHT);
 
             // Game Over Text
             char gameOverText[50];
