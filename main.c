@@ -688,14 +688,18 @@ int main()
             gameOverTime++;
             gameOverTime = gameOverTime > SCREEN_HEIGHT ? -16 : gameOverTime;
 
-            // TODO: Desenhar quadrados verticais para apagar as linhas, dando um efeito visual melhor.
+            // TODO: Fazer animando.
             ssd1306_clear_square(&display, 8, 0, 2, SCREEN_HEIGHT);
             ssd1306_clear_square(&display, 16, 0, 2, SCREEN_HEIGHT);
             ssd1306_clear_square(&display, 20, 0, 2, SCREEN_HEIGHT);
-
             ssd1306_clear_square(&display, SCREEN_WIDTH - 20 - 1, 0, 2, SCREEN_HEIGHT);
             ssd1306_clear_square(&display, SCREEN_WIDTH - 16 - 1, 0, 2, SCREEN_HEIGHT);
             ssd1306_clear_square(&display, SCREEN_WIDTH - 8 - 1, 0, 2, SCREEN_HEIGHT);
+
+            for (int i = 0; i < SCREEN_HEIGHT; i += 2)
+            {
+                ssd1306_clear_square(&display, 0, i, SCREEN_WIDTH, 1);
+            }
 
             ssd1306_clear_square(&display, 24, 0, SCREEN_WIDTH - 48, SCREEN_HEIGHT);
 
