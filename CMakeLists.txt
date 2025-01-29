@@ -69,6 +69,8 @@ target_include_directories(PatroGalaxy PRIVATE
 target_link_libraries(PatroGalaxy 
         hardware_i2c
         hardware_adc
+        hardware_timer
+        hardware_irq
         pico-ssd1306
         pico_cyw43_arch_lwip_threadsafe_background
         )

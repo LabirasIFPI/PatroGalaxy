@@ -40,6 +40,10 @@
         "cyw43_arch.h": "c",
         "compare": "c",
         "cstdint": "c",
-        "player.h": "c"
+        "player.h": "c",
+        "adc.h": "c",
+        "initialize.h": "c",
+        "timer.h": "c",
+        "ip_addr.h": "c"
     }
 }

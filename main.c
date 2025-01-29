@@ -24,6 +24,12 @@
 
 // lwIP library import
 #include "lwip/tcp.h"
+#include "lwip/udp.h"
+#include "lwip/ip_addr.h"
+
+// Clock Definitions
+#include "hardware/timer.h"
+#include "hardware/irq.h"
 
 // Game Definitions
 #define STEP_CYCLE 3
@@ -40,6 +46,19 @@ ssd1306_t display;
 void clearDisplay()
 {
     ssd1306_clear(&display);
+}
+
+void clockCallbackAction()
+{
+    char buffer[20];
+    snprintf(buffer, sizeof(buffer), "%d %d", player.box.x, player.box.y);
+    sendInfoToServer(buffer);
+}
+
+bool timerCallback(struct repeating_timer *t)
+{
+    clockCallbackAction();
+    return true;
 }
 
 // Debug Row Number
@@ -144,46 +163,50 @@ void updateAxis(uint *analog_x, uint *analog_y)
     *analog_y = readAnalogY();
 }
 
-/**
- * @brief Sends information to the server.
- *
- * This function creates a new TCP protocol control block (PCB), connects to the server
- * at the specified IP address and port, and sends the provided information to the server.
- * It also provides feedback through the `drawText` function to indicate the status of the operation.
- *
- * @param info The information to be sent to the server.
- *
- * @note This function is still under development and may not handle all edge cases or errors.
- *       The connection callback function is currently set to NULL and the PCB is not closed after sending data.
- */
-void sendInfoToServer(int info) // Incomplete function
+void sendInfoToServer(char info) // Incomplete function
 {
-    struct tcp_pcb *pcb = tcp_new();
+    struct udp_pcb *pcb = udp_new(); // Cria um PCB para UDP
     if (!pcb)
     {
-        drawText("Failed to create PCB");
+        printf("Failed to create PCB");
         return;
     }
 
     ip_addr_t server_ip;
-    IP4_ADDR(&server_ip, 192, 168, 137, 1);
+    IP4_ADDR(&server_ip, 192, 168, 137, 1); // Define o endereço IP do servidor
 
-    if (tcp_connect(pcb, &server_ip, 5000, NULL) != ERR_OK)
-    { // Saber de onde vem o ERR_OK
-        drawText("Failed to connect to server");
+    struct pbuf *p;
+    char infoStr[10];
+    strncpy(infoStr, info, sizeof(infoStr) - 1); // Copia a string para infoStr
+    infoStr[sizeof(infoStr) - 1] = '\0'; // Garante que a string esteja terminada em null
+    printf("Sending info: %s\n", infoStr);
+
+    // Cria um buffer de pacote
+    p = pbuf_alloc(PBUF_TRANSPORT, strlen(infoStr), PBUF_RAM);
+    if (!p)
+    {
+        printf("Failed to allocate pbuf");
+        udp_remove(pcb); // Libera o PCB em caso de erro
         return;
     }
 
-    drawText("Connected to server");
+    // Copia os dados para o buffer
+    memcpy(p->payload, infoStr, strlen(infoStr));
 
-    char infoStr[10];
-    sprintf(infoStr, "%d", info);
+    // Envia o pacote UDP
+    err_t err = udp_sendto(pcb, p, &server_ip, 5000); // Porta do servidor
+    if (err != ERR_OK)
+    {
+        printf("Failed to send UDP packet");
+    }
+    else
+    {
+        // drawText("Info sent to server");
+    }
 
-    tcp_write(pcb, infoStr, sizeof(info), TCP_WRITE_FLAG_COPY);
-    tcp_output(pcb);
-    // tcp_close(pcb);
-
-    drawText("Info sent to server");
+    // Libera o buffer e o PCB
+    pbuf_free(p);
+    udp_remove(pcb);
 }
 
 // Game Variables
@@ -278,7 +301,8 @@ void callbackFunction(uint gpio, uint32_t events)
     case 3: // Communication Test
         if (gpio == BTA)
         {
-            sendInfoToServer(42);
+            int numb = rand() % 300;
+            sendInfoToServer(numb);
         }
         if (gpio == BTB)
         {
@@ -467,6 +491,10 @@ int main()
 
     initStars();
 
+    // Inicializar Timer
+    struct repeating_timer timer;
+    add_repeating_timer_us(1000 * 100, timerCallback, NULL, &timer);
+
     gameState = -1; // Inicialização
 
     // Title Screen Variables
@@ -487,6 +515,7 @@ int main()
     // Conectar ao Wi-fi ao pressionar o botão B:
     if (!gpio_get(BTB))
     {
+        clearDisplay();
         initWifi();
         int connectTries = 0;
         int connected = 0;
@@ -671,6 +700,14 @@ int main()
             ssd1306_invert(&display, flashScreen);
 
             ssd1306_show(&display);
+
+            // Enviar
+            if (connected)
+            {
+                // Retirado pois o envio será feito a partir de clock callback.
+                // sendInfoToServer(score);
+            }
+
             sleep_ms(STEP_CYCLE);
         }
 
