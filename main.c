@@ -124,27 +124,37 @@ int connected = 0;
  *
  * @return int Returns 1 if the connection is successful, otherwise returns 0.
  */
-int tryToConnect()
+void tryToConnect()
 {
-    printf("Connecting to Wi-Fi...\n");
-    drawText("Connecting to Wi-Fi...");
-    if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 12000))
+    printf("Connecting to Wi-Fi\n");
+    int result = cyw43_arch_wifi_connect_async(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK);
+
+    // Check if connection start was successful
+    if (result != 0)
     {
-        printf("failed to connect.\n");
-        drawText("Failed to connect");
-        return 0;
+        clearDisplay();
+        printf("Failed to start connection.\n");
+        drawTextCentered("Failed to start connection", -1);
+        return;
     }
-    else
+}
+
+void checkConnection(int *connectedVar)
+{
+    int status = cyw43_tcpip_link_status(&cyw43_state, CYW43_ITF_STA);
+
+    int elapsedTime = to_ms_since_boot(get_absolute_time()) / 100;
+    int _y = SCREEN_HEIGHT / 2 + sin(elapsedTime) * 4;
+
+    if (status == CYW43_LINK_UP)
     {
         printf("Connected.\n");
-        drawText("Connected");
-        // Read the ip address in a human readable way
+
         uint8_t *ip_address = (uint8_t *)&(cyw43_state.netif[0].ip_addr.addr);
         snprintf(ip_str, sizeof(ip_str), "%d.%d.%d.%d", ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
-        printf("IP address %s\n", ip_str);
-        drawText(ip_str);
-        connected = 1;
-        return 1;
+        printf("IP address: %s\n", ip_str);
+
+        *connectedVar = 1;
     }
 }
 
@@ -178,7 +188,7 @@ void sendInfoToServer(char info) // Incomplete function
     struct pbuf *p;
     char infoStr[10];
     strncpy(infoStr, info, sizeof(infoStr) - 1); // Copia a string para infoStr
-    infoStr[sizeof(infoStr) - 1] = '\0'; // Garante que a string esteja terminada em null
+    infoStr[sizeof(infoStr) - 1] = '\0';         // Garante que a string esteja terminada em null
     printf("Sending info: %s\n", infoStr);
 
     // Cria um buffer de pacote
@@ -476,6 +486,29 @@ void checkPlayerCollision()
     }
 }
 
+void drawTextCentered(char *text, int _y)
+{
+    if (_y == -1)
+    {
+        _y = SCREEN_HEIGHT / 2 - 6;
+    }
+    int _x = SCREEN_WIDTH / 2 - 6 * strlen(text) / 2 - 1;
+    ssd1306_draw_string(&display, _x, _y, 1, text);
+}
+
+void drawWave(int y, int time, float amplitude)
+{
+    int _points = 12;
+    for (int i = 0; i < _points; i++)
+    {
+        int _x1 = SCREEN_WIDTH / _points * i;
+        int _x2 = SCREEN_WIDTH / _points * (i + 1);
+        int _y1 = y + sin(time + i * 60) * amplitude;
+        int _y2 = y + sin(time + (i + 1) * 60) * amplitude;
+        ssd1306_draw_line(&display, _x1, _y1, _x2, _y2);
+    }
+}
+
 int main()
 {
     sleep_ms(69);
@@ -507,9 +540,8 @@ int main()
 
     // Tela de inicialização para evitar bugs ao resetar na tela de título.
     clearDisplay();
-    ssd1306_draw_string(&display, 0, 0, 1, "Iniciando...");
+    drawTextCentered("Iniciando", -1);
     ssd1306_show(&display);
-
     sleep_ms(169);
 
     // Conectar ao Wi-fi ao pressionar o botão B:
@@ -518,22 +550,51 @@ int main()
         clearDisplay();
         initWifi();
         int connectTries = 0;
-        int connected = 0;
-        while (!connected && connectTries < 2)
+
+        tryToConnect();
+        int timer = 0;
+        float waveAmplitude = 8;
+        while (!connected)
         {
-            connected = tryToConnect();
-            connectTries++;
-            sleep_ms(1000);
+            clearDisplay();
+            drawTextCentered("Connecting to Wi-Fi", SCREEN_HEIGHT / 2);
+
+            drawWave(SCREEN_HEIGHT - 8, timer / 4, waveAmplitude);
+
+            ssd1306_show(&display);
+            checkConnection(&connected);
+
+            timer++;
+            sleep_ms(STEP_CYCLE);
         }
 
-        if (!connected)
+        timer = 0;
+        while (timer < 500)
         {
-            drawText("Disconnected");
-            strcpy(ip_str, "Disconnected");
-            connected = 0;
-        }
+            clearDisplay();
 
-        sleep_ms(2069);
+            if (connected)
+            {
+                drawWave(SCREEN_HEIGHT - 8, timer, waveAmplitude);
+                waveAmplitude = waveAmplitude > 1 ? waveAmplitude - 0.069 : 1;
+
+                drawTextCentered("Connected!", SCREEN_HEIGHT / 2);
+
+                char ipMessage[32];
+                snprintf(ipMessage, sizeof(ipMessage), "\n%s", ip_str);
+                drawTextCentered(ipMessage, SCREEN_HEIGHT / 2 + 12);
+            }
+            else
+            {
+                drawTextCentered("Disconnected", -1);
+                strcpy(ip_str, "Disconnected");
+                connected = 0;
+            }
+
+            timer++;
+            ssd1306_show(&display);
+            sleep_ms(STEP_CYCLE);
+        }
     }
 
     // Apagar dados ao pressionar o botão A
@@ -725,7 +786,6 @@ int main()
             gameOverTime++;
             gameOverTime = gameOverTime > SCREEN_HEIGHT ? -16 : gameOverTime;
 
-            // TODO: Fazer animando.
             ssd1306_clear_square(&display, 8, 0, 2, SCREEN_HEIGHT);
             ssd1306_clear_square(&display, 16, 0, 2, SCREEN_HEIGHT);
             ssd1306_clear_square(&display, 20, 0, 2, SCREEN_HEIGHT);
@@ -735,7 +795,7 @@ int main()
 
             for (int i = 0; i < SCREEN_HEIGHT; i += 2)
             {
-                ssd1306_clear_square(&display, 0, i, SCREEN_WIDTH, 1);
+                ssd1306_clear_square(&display, 0, i + gameOverTime % 2, SCREEN_WIDTH, 1);
             }
 
             ssd1306_clear_square(&display, 24, 0, SCREEN_WIDTH - 48, SCREEN_HEIGHT);
