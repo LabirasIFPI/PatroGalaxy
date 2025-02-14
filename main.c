@@ -8,6 +8,9 @@
 #include <math.h>
 #include <time.h>
 #include "saveSystem.h"
+#include "display.h"
+#include "analog.h"
+#include "text.h"
 
 // Project-specific imports
 #include "player.h"
@@ -16,16 +19,6 @@
 
 // Pico SDK imports
 #include "pico/stdlib.h"
-#include "pico/cyw43_arch.h"
-
-// Wi-Fi configuration
-#define WIFI_SSID "pat"
-#define WIFI_PASSWORD "rajadaaaa"
-
-// lwIP library import
-#include "lwip/tcp.h"
-#include "lwip/udp.h"
-#include "lwip/ip_addr.h"
 
 // Clock Definitions
 #include "hardware/timer.h"
@@ -34,258 +27,48 @@
 // Game Definitions
 #define STEP_CYCLE 3
 
-// Display Instance
-ssd1306_t display;
-
-/**
- * @brief Clears the SSD1306 display.
- *
- * This function clears the contents of the SSD1306 display by calling the
- * ssd1306_clear function and passing the display instance.
- */
-void clearDisplay()
-{
-    ssd1306_clear(&display);
-}
-
-void clockCallbackAction()
-{
-    char buffer[20];
-    snprintf(buffer, sizeof(buffer), "%d %d", player.box.x, player.box.y);
-    sendInfoToServer(buffer);
-}
-
-bool timerCallback(struct repeating_timer *t)
-{
-    clockCallbackAction();
-    return true;
-}
-
-// Debug Row Number
-int textInd = 0;
-
-/**
- * @brief Draws text on the SSD1306 display.
- *
- * This function draws the given text on the SSD1306 display at a position
- * determined by the current text index. After drawing the text, it updates
- * the display and increments the text index. If the text index reaches 6,
- * it wraps around to 0.
- *
- * @param text The text string to be drawn on the display.
- */
-void drawText(char *text)
-{
-    int ind = textInd;
-    ssd1306_draw_string(&display, 0, ind * 10, 1, text);
-    ssd1306_show(&display);
-    textInd = ind + 1;
-    textInd = textInd >= 6 ? 0 : textInd;
-}
-
-/**
- * @brief Initializes the Wi-Fi chip and enables Wi-Fi station mode.
- *
- * This function initializes the Wi-Fi chip using the `cyw43_arch_init` function.
- * If the initialization fails, it prints an error message and returns 1.
- * If the initialization is successful, it prints a success message and enables
- * the Wi-Fi station mode using the `cyw43_arch_enable_sta_mode` function.
- *
- * @return int Returns 0 if the initialization is successful, otherwise returns 1.
- */
-int initWifi()
-{
-    // Initialise the Wi-Fi chip
-    if (cyw43_arch_init())
-    {
-        printf("Wi-Fi init failed\n");
-        drawText("Wi-Fi init failed");
-        return 1;
-    }
-
-    drawText("Wi-Fi init success");
-
-    // Enable wifi station
-    cyw43_arch_enable_sta_mode();
-
-    return 0;
-}
-
-// IP address string
-char ip_str[16];
-int connected = 0;
-
-/**
- * @brief Attempts to connect to a Wi-Fi network using predefined SSID and password.
- *
- * This function tries to establish a connection to a Wi-Fi network using the
- * credentials defined by WIFI_SSID and WIFI_PASSWORD. It provides feedback
- * through console output and a graphical interface by calling `drawText`.
- *
- * @return int Returns 1 if the connection is successful, otherwise returns 0.
- */
-void tryToConnect()
-{
-    printf("Connecting to Wi-Fi\n");
-    int result = cyw43_arch_wifi_connect_async(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK);
-
-    // Check if connection start was successful
-    if (result != 0)
-    {
-        clearDisplay();
-        printf("Failed to start connection.\n");
-        drawTextCentered("Failed to start connection", -1);
-        return;
-    }
-}
-
-void checkConnection(int *connectedVar)
-{
-    int status = cyw43_tcpip_link_status(&cyw43_state, CYW43_ITF_STA);
-
-    int elapsedTime = to_ms_since_boot(get_absolute_time()) / 100;
-    int _y = SCREEN_HEIGHT / 2 + sin(elapsedTime) * 4;
-
-    if (status == CYW43_LINK_UP)
-    {
-        printf("Connected.\n");
-
-        uint8_t *ip_address = (uint8_t *)&(cyw43_state.netif[0].ip_addr.addr);
-        snprintf(ip_str, sizeof(ip_str), "%d.%d.%d.%d", ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
-        printf("IP address: %s\n", ip_str);
-
-        *connectedVar = 1;
-    }
-}
-
-/**
- * @brief Updates the values of the analog X and Y axes.
- *
- * This function reads the current values of the analog X and Y axes
- * and updates the provided pointers with these values.
- *
- * @param analog_x Pointer to an unsigned integer where the analog X value will be stored.
- * @param analog_y Pointer to an unsigned integer where the analog Y value will be stored.
- */
-void updateAxis(uint *analog_x, uint *analog_y)
-{
-    *analog_x = readAnalogX();
-    *analog_y = readAnalogY();
-}
-
-void sendInfoToServer(char info) // Incomplete function
-{
-    struct udp_pcb *pcb = udp_new(); // Cria um PCB para UDP
-    if (!pcb)
-    {
-        printf("Failed to create PCB");
-        return;
-    }
-
-    ip_addr_t server_ip;
-    IP4_ADDR(&server_ip, 192, 168, 137, 1); // Define o endereço IP do servidor
-
-    struct pbuf *p;
-    char infoStr[10];
-    strncpy(infoStr, info, sizeof(infoStr) - 1); // Copia a string para infoStr
-    infoStr[sizeof(infoStr) - 1] = '\0';         // Garante que a string esteja terminada em null
-    printf("Sending info: %s\n", infoStr);
-
-    // Cria um buffer de pacote
-    p = pbuf_alloc(PBUF_TRANSPORT, strlen(infoStr), PBUF_RAM);
-    if (!p)
-    {
-        printf("Failed to allocate pbuf");
-        udp_remove(pcb); // Libera o PCB em caso de erro
-        return;
-    }
-
-    // Copia os dados para o buffer
-    memcpy(p->payload, infoStr, strlen(infoStr));
-
-    // Envia o pacote UDP
-    err_t err = udp_sendto(pcb, p, &server_ip, 5000); // Porta do servidor
-    if (err != ERR_OK)
-    {
-        printf("Failed to send UDP packet");
-    }
-    else
-    {
-        // drawText("Info sent to server");
-    }
-
-    // Libera o buffer e o PCB
-    pbuf_free(p);
-    udp_remove(pcb);
-}
-
-// Game Variables
-int lives = 3;
-int score = 0;
-int scoreDraw = 0;
-uint16_t highScore = 0;
-int newHighScore = 0; // false
-int steps = 0;
-int headerMode = 1;      // 0 - Mostra IP, 1 - Mostra Nome do Level
-int gameState = 0;       // 0 - Menu, 1 - Game, 2 - Game Over
-int startProgress = 100; // 0 to 100
-int transitioningToState = -1;
-int playerSpawnTime = 30;
-int playerInvulnerableTimer = 90;
-int shootCooldown = 0;
-float gameSpeed = 1.0;
-int flashScreen = 0;
-int titleScreenInitialized = 0;
-int gameSaved = 0; // Variável de controle para impedir múltiplos salvamentos.
+// Global Variables
+int lives = 3;                       // Número de vidas
+int score = 0;                       // Pontuação
+int scoreDraw = 0;                   // Pontuação a ser desenhada
+float gameSpeed = 1.0;               // Velocidade do jogo (aumenta com a pontuação)
+uint16_t highScore = 0;              // High Score
+bool newHighScore = false;           // Flag para indicar novo high score
+int playerSpawnTime = 30;            // Tempo de spawn do player
+int playerInvulnerableTimer = 90;    // Tempo de invulnerabilidade do player
+int shootCooldown = 0;               // Cooldown de tiros
+int headerMode = 1;                  // 0 - Mostra High Score, 1 - Mostra Nome do Level
+int gameState = -1;                  // 0 - Menu, 1 - Game, 2 - Game Over
+int flashScreen = 0;                 // Flag para piscar a tela
+bool titleScreenInitialized = false; // Flag para indicar se a tela de título foi inicializada
+int transitionProgress = 100;        // Progresso da transição de estados
+int transitioningToState = -1;       // Variável de controle para transição de estados
+bool gameSaved = false;              // Variável de controle para impedir múltiplos salvamentos.
 
 void changeGameState(int state)
 {
     transitioningToState = state;
-    startProgress = 0;
+    transitionProgress = 0;
 }
 
 /**
  * @brief Callback function to handle GPIO events.
  *
  * This function is called when a GPIO event occurs. It checks the current game state
- * and performs actions based on the GPIO pin that triggered the event.
+ * and performs actions based on the GPIO pin that triggered the event.///@func
  *
  * @param gpio The GPIO pin number that triggered the event.
  * @param events The event mask indicating the type of event that occurred.
  */
-void callbackFunction(uint gpio, uint32_t events)
+void handleButtonGpioEvent(uint gpio, uint32_t events)
 {
     switch (gameState)
     {
-    case 0:
-        // Retirado porque é uma função de testes.
-        // if (gpio == BTA)
-        // {
-        //     // Criar buffer de salvamento
-        //     uint8_t buffer[2];
-
-        //     // Alimentar buffer
-        //     highScore = rand() % 1000;
-        //     printf("Highscore: %d\n", highScore);
-        //     createBuffer(highScore, &buffer);
-
-        //     // Salvar buffer
-        //     saveProgress(&buffer);
-
-        //     printf("Saved progress\n");
-        // }
+    case 0: // Title Screen
         if (gpio == BTB)
         {
             if (transitioningToState == -1)
                 changeGameState(1);
-        }
-        if (gpio == BTA)
-        {
-            // Se estiver conectado, mudar para o estado de teste de comunicação
-            if (connected)
-            {
-                changeGameState(3);
-            }
         }
         break;
     case 1: // Game
@@ -304,19 +87,8 @@ void callbackFunction(uint gpio, uint32_t events)
             if (transitioningToState == -1)
             {
                 changeGameState(0);
-                titleScreenInitialized = 0;
+                titleScreenInitialized = false;
             }
-        }
-        break;
-    case 3: // Communication Test
-        if (gpio == BTA)
-        {
-            int numb = rand() % 300;
-            sendInfoToServer(numb);
-        }
-        if (gpio == BTB)
-        {
-            changeGameState(0);
         }
         break;
     default:
@@ -336,12 +108,13 @@ void callbackFunction(uint gpio, uint32_t events)
  */
 void drawInterface()
 {
+    static int steps = 0;
+
     // Header
     ssd1306_clear_square(&display, 0, 0, SCREEN_WIDTH, 9);
     char headerText[50];
     if (headerMode == 0)
     {
-        // sprintf(headerText, "IP: %s", ip_str);
         sprintf(headerText, "High Score: %d", highScore);
     }
     else
@@ -379,25 +152,25 @@ void drawInterface()
 
 void drawTransition()
 {
-    if (transitioningToState == -1 && startProgress == 0)
+    if (transitioningToState == -1 && transitionProgress == 0)
     {
         // return;
     }
-    startProgress += 6 * (1 - (2 * (transitioningToState == -1)));
+    transitionProgress += 6 * (1 - (2 * (transitioningToState == -1)));
 
     // Limit values between 0 and 100
-    startProgress = startProgress > 100 ? 100 : startProgress;
-    startProgress = startProgress < 0 ? 0 : startProgress;
+    transitionProgress = transitionProgress > 100 ? 100 : transitionProgress;
+    transitionProgress = transitionProgress < 0 ? 0 : transitionProgress;
 
-    if (startProgress >= 100 && transitioningToState != -1)
+    if (transitionProgress >= 100 && transitioningToState != -1)
     {
         gameState = transitioningToState;
         transitioningToState = -1;
     }
 
     // Desenhar um retangulo cobrindo a tela com base no valor de startProgress
-    int rectHeight = (SCREEN_HEIGHT * startProgress) / 100;
-    if (startProgress >= 100)
+    int rectHeight = (SCREEN_HEIGHT * transitionProgress) / 100;
+    if (transitionProgress >= 100)
     {
         rectHeight = SCREEN_HEIGHT;
     }
@@ -451,7 +224,7 @@ void playerDeath()
         // Check high score
         if (score > highScore)
         {
-            newHighScore = 1;
+            newHighScore = true;
             highScore = score;
             if (!gameSaved)
             {
@@ -460,7 +233,7 @@ void playerDeath()
                 uint8_t buffer[2];
                 createBuffer(highScore, buffer);
                 saveProgress(buffer);
-                gameSaved = 1;
+                gameSaved = true;
                 printf("Game saved: %d\n", gameSaved);
             }
         }
@@ -486,49 +259,18 @@ void checkPlayerCollision()
     }
 }
 
-void drawTextCentered(char *text, int _y)
-{
-    if (_y == -1)
-    {
-        _y = SCREEN_HEIGHT / 2 - 6;
-    }
-    int _x = SCREEN_WIDTH / 2 - 6 * strlen(text) / 2 - 1;
-    ssd1306_draw_string(&display, _x, _y, 1, text);
-}
-
-void drawWave(int y, int time, float amplitude)
-{
-    int _points = 12;
-    for (int i = 0; i < _points; i++)
-    {
-        int _x1 = SCREEN_WIDTH / _points * i;
-        int _x2 = SCREEN_WIDTH / _points * (i + 1);
-        int _y1 = y + sin(time + i * 60) * amplitude;
-        int _y2 = y + sin(time + (i + 1) * 60) * amplitude;
-        ssd1306_draw_line(&display, _x1, _y1, _x2, _y2);
-    }
-}
-
 int main()
 {
-    sleep_ms(69);
+    sleep_ms(30);
 
+    // Inicialização
     stdio_init_all();
-
     initI2C();
     initDisplay();
     clearDisplay();
-
     initAnalog();
-    initButtons(callbackFunction);
-
+    initButtons(handleButtonGpioEvent);
     initStars();
-
-    // Inicializar Timer
-    struct repeating_timer timer;
-    add_repeating_timer_us(1000 * 100, timerCallback, NULL, &timer);
-
-    gameState = -1; // Inicialização
 
     // Title Screen Variables
     int introTime;
@@ -542,60 +284,7 @@ int main()
     clearDisplay();
     drawTextCentered("Iniciando", -1);
     ssd1306_show(&display);
-    sleep_ms(169);
-
-    // Conectar ao Wi-fi ao pressionar o botão B:
-    if (!gpio_get(BTB))
-    {
-        clearDisplay();
-        initWifi();
-        int connectTries = 0;
-
-        tryToConnect();
-        int timer = 0;
-        float waveAmplitude = 8;
-        while (!connected)
-        {
-            clearDisplay();
-            drawTextCentered("Connecting to Wi-Fi", SCREEN_HEIGHT / 2);
-
-            drawWave(SCREEN_HEIGHT - 8, timer / 4, waveAmplitude);
-
-            ssd1306_show(&display);
-            checkConnection(&connected);
-
-            timer++;
-            sleep_ms(STEP_CYCLE);
-        }
-
-        timer = 0;
-        while (timer < 500)
-        {
-            clearDisplay();
-
-            if (connected)
-            {
-                drawWave(SCREEN_HEIGHT - 8, timer, waveAmplitude);
-                waveAmplitude = waveAmplitude > 1 ? waveAmplitude - 0.069 : 1;
-
-                drawTextCentered("Connected!", SCREEN_HEIGHT / 2);
-
-                char ipMessage[32];
-                snprintf(ipMessage, sizeof(ipMessage), "\n%s", ip_str);
-                drawTextCentered(ipMessage, SCREEN_HEIGHT / 2 + 12);
-            }
-            else
-            {
-                drawTextCentered("Disconnected", -1);
-                strcpy(ip_str, "Disconnected");
-                connected = 0;
-            }
-
-            timer++;
-            ssd1306_show(&display);
-            sleep_ms(STEP_CYCLE);
-        }
-    }
+    sleep_ms(69);
 
     // Apagar dados ao pressionar o botão A
     if (!gpio_get(BTA))
@@ -609,11 +298,12 @@ int main()
 
     gameState = 0;
 
-    while (1)
+    while (true)
     {
         // Title Screen
         while (gameState == 0)
         {
+
             if (!titleScreenInitialized)
             {
                 introTime = 0;
@@ -626,8 +316,8 @@ int main()
                 score = 0;
                 scoreDraw = 0;
                 gameSpeed = 1.0;
-                newHighScore = 0;
-                gameSaved = 0; // Permite salvar novamente ao finalizar o jogo.
+                newHighScore = false;
+                gameSaved = false;
                 initPlayer(&player);
 
                 // Carregar Dados
@@ -635,7 +325,7 @@ int main()
                 loadProgress(buffer, 2);
                 loadBuffer(buffer, &highScore);
 
-                titleScreenInitialized = 1;
+                titleScreenInitialized = true;
             }
             clearDisplay();
             int ang = introTime * 6;
@@ -669,16 +359,6 @@ int main()
                 _x = SCREEN_WIDTH / 2 - 5 * (strlen(highScoreText) + 1) / 2;
                 _y = -8 + 15 - MIN(15, _yAdd);
                 ssd1306_draw_string(&display, _x, _y, 1, highScoreText);
-            }
-
-            // Draw IP if connected
-            if (connected)
-            {
-                char ipText[50];
-                sprintf(ipText, "IP: %s", ip_str);
-                _x = SCREEN_WIDTH / 2 - 5 * (strlen(ipText) + 1) / 2;
-                _y = -8 + 30 - MIN(30, _yAdd);
-                ssd1306_draw_string(&display, _x, _y, 1, ip_str);
             }
 
             drawTransition();
@@ -722,8 +402,7 @@ int main()
             int canMove = (playerSpawnTime == 0);
             if (canMove)
             {
-                int analog_x, analog_y;
-                updateAxis(&analog_x, &analog_y);
+                updateAxis();
                 movePlayer(&player, analog_x, analog_y);
             }
 
@@ -762,13 +441,6 @@ int main()
 
             ssd1306_show(&display);
 
-            // Enviar
-            if (connected)
-            {
-                // Retirado pois o envio será feito a partir de clock callback.
-                // sendInfoToServer(score);
-            }
-
             sleep_ms(STEP_CYCLE);
         }
 
@@ -795,7 +467,7 @@ int main()
 
             for (int i = 0; i < SCREEN_HEIGHT; i += 2)
             {
-                ssd1306_clear_square(&display, 0, i + gameOverTime % 2, SCREEN_WIDTH, 1);
+                ssd1306_clear_square(&display, 0, i, SCREEN_WIDTH, 1);
             }
 
             ssd1306_clear_square(&display, 24, 0, SCREEN_WIDTH - 48, SCREEN_HEIGHT);
@@ -827,22 +499,6 @@ int main()
             sleep_ms(STEP_CYCLE);
         }
 
-        // Communication Test
-        while (gameState == 3)
-        {
-            clearDisplay();
-            ssd1306_invert(&display, 1);
-
-            // Desenhar IP:
-            char ipText[50];
-            sprintf(ipText, "IP: %s", ip_str);
-            int _x = SCREEN_WIDTH - 5 * (strlen(ipText) + 1) - 2;
-            int _y = SCREEN_HEIGHT - 7;
-            ssd1306_draw_string(&display, _x, _y, 1, ipText);
-
-            drawTransition();
-            sleep_ms(STEP_CYCLE);
-        }
         clearDisplay();
         ssd1306_show(&display);
     }

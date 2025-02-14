@@ -10,6 +10,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "display.h"
+
 #include "boundingBox.h"
 
 // Definição do Player (global)

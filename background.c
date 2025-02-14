@@ -2,6 +2,7 @@
 #include "ssd1306.h"
 #include <stdlib.h>
 #include "initialize.h"
+#include "display.h"
 
 // Variável global para as estrelas
 Star stars[10];

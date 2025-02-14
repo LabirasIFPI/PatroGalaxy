@@ -35,14 +35,11 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
+file(GLOB SOURCE "*.c")
+
 add_executable(PatroGalaxy main.c 
 lib/pico-ssd1306/ssd1306.c
-initialize.c
-player.c
-background.c
-utils.c
-asteroids.c
-saveSystem.c
+${SOURCE}
 )
 
 pico_set_program_name(PatroGalaxy "PatroGalaxy")

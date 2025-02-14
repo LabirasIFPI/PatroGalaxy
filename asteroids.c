@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "initialize.h"
 #include <math.h>
+#include "display.h"
 
 #define DEG2RAD 0.0174532925 // Degrees to radians: (PI / 180)
 
