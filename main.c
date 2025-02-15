@@ -264,7 +264,7 @@ int main()
         drawTextCentered("Patrocinio", _y);
 
         // Draw Playership
-        int _shipX = SCREEN_WIDTH / 2 - 16 + cos(splashTimer / 26.9) * 5;
+        int _shipX = SCREEN_WIDTH / 2 - 6 + cos(splashTimer / 26.9) * 5;
         int _shipY = SCREEN_HEIGHT / 2 + 8 + sin(splashTimer / 36.9) * 2;
         introPlayer.box.x = _shipX;
         introPlayer.box.y = _shipY;
@@ -274,8 +274,6 @@ int main()
             introPlayerInitialized = true;
         }
         drawPlayer(&introPlayer);
-
-        // Particles
 
         _y = SCREEN_HEIGHT - 12;
         drawTextCentered("EmbarcaTech - 2025", _y);

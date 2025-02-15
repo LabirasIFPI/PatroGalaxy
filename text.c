@@ -1,4 +1,5 @@
 #include "text.h"
+#include <string.h>
 
 void drawHeader(int x, int y, char *text)
 {

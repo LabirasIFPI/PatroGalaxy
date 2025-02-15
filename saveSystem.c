@@ -1,5 +1,6 @@
 #include "saveSystem.h"
 #include <string.h>
+#include <stdio.h>
 
 void saveProgress(uint8_t *progressString)
 {
