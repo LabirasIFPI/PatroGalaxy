@@ -36,14 +36,17 @@ typedef struct
 void initPlayer(Player *player);
 void movePlayer(Player *player, int deltaX, int deltaY);
 void drawPlayer(Player *player);
+bool checkPlayerCollision();
 
 void initBullets();
 void updateBullets();
 void drawBullets();
 void shoot(Player *player);
+bool checkBulletsCollisions();
 
 // Variável global para o Player
 extern Player player;
 extern Bullet bullets[MAX_BULLETS];
+extern int playerInvulnerableTimer; // Tempo de invulnerabilidade do player
 
 #endif // PLAYER_H

@@ -6,6 +6,7 @@
 #include "initialize.h"
 #include "utils.h"
 #include <math.h>
+#include <string.h>
 #include <time.h>
 #include "saveSystem.h"
 #include "display.h"
@@ -16,6 +17,7 @@
 #include "player.h"
 #include "background.h"
 #include "asteroids.h"
+#include "patroGalaxyUtils.h"
 
 // Pico SDK imports
 #include "pico/stdlib.h"
@@ -35,7 +37,6 @@ float gameSpeed = 1.0;               // Velocidade do jogo (aumenta com a pontua
 uint16_t highScore = 0;              // High Score
 bool newHighScore = false;           // Flag para indicar novo high score
 int playerSpawnTime = 30;            // Tempo de spawn do player
-int playerInvulnerableTimer = 90;    // Tempo de invulnerabilidade do player
 int shootCooldown = 0;               // Cooldown de tiros
 int headerMode = 1;                  // 0 - Mostra High Score, 1 - Mostra Nome do Level
 int gameState = -1;                  // 0 - Menu, 1 - Game, 2 - Game Over
@@ -177,36 +178,6 @@ void drawTransition()
     ssd1306_clear_square(&display, 0, SCREEN_HEIGHT - rectHeight, SCREEN_WIDTH, rectHeight);
 }
 
-int checkCollision(BoundingBox *a, BoundingBox *b)
-{
-    return (a->x - a->w / 2 < b->x + b->w / 2 &&
-            a->x + a->w / 2 > b->x - b->w / 2 &&
-            a->y - a->h / 2 < b->y + b->h / 2 &&
-            a->y + a->h / 2 > b->y - b->h / 2);
-}
-
-void checkBulletsCollisions()
-{
-    for (int i = 0; i < MAX_BULLETS; i++)
-    {
-        if (bullets[i].active)
-        {
-            for (int j = 0; j < MAX_ASTEROIDS; j++)
-            {
-                if (asteroids[j].active)
-                {
-                    if (checkCollision(&bullets[i].box, &asteroids[j].box))
-                    {
-                        bullets[i].active = 0;
-                        asteroids[j].active = 0;
-                        score += 100;
-                    }
-                }
-            }
-        }
-    }
-}
-
 void playerDeath()
 {
     lives--;
@@ -235,25 +206,6 @@ void playerDeath()
                 saveProgress(buffer);
                 gameSaved = true;
                 printf("Game saved: %d\n", gameSaved);
-            }
-        }
-    }
-}
-
-void checkPlayerCollision()
-{
-    // If player is invulnerable, don't check for collisions
-    if (playerInvulnerableTimer > 0)
-        return;
-
-    for (int i = 0; i < MAX_ASTEROIDS; i++)
-    {
-        if (asteroids[i].active)
-        {
-            if (checkCollision(&player.box, &asteroids[i].box))
-            {
-                playerDeath();
-                asteroids[i].active = 0;
             }
         }
     }
@@ -406,7 +358,10 @@ int main()
                 movePlayer(&player, analog_x, analog_y);
             }
 
-            checkPlayerCollision();
+            if (checkPlayerCollision())
+            {
+                playerDeath();
+            }
             shootCooldown = shootCooldown > 0 ? shootCooldown - 1 : 0;
             playerInvulnerableTimer = playerInvulnerableTimer > 0 ? playerInvulnerableTimer - 1 : 0;
 
@@ -425,7 +380,10 @@ int main()
             moveAsteroids(1 + gameSpeed / 4);
             updateBullets();
 
-            checkBulletsCollisions();
+            if (checkBulletsCollisions())
+            {
+                score += 100;
+            }
 
             // Draw game entities
             drawAsteroids();

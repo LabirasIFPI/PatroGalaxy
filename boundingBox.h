@@ -10,4 +10,6 @@ typedef struct
     int h;
 } BoundingBox;
 
+int checkCollision(BoundingBox *a, BoundingBox *b);
+
 #endif // BOUDINGBOX_H

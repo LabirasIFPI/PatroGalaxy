@@ -11,14 +11,16 @@
 #include <stdlib.h>
 
 #include "display.h"
-
 #include "boundingBox.h"
+#include "asteroids.h"
 
 // Definição do Player (global)
 Player player;
 
 // Definição das balas (global)
 Bullet bullets[MAX_BULLETS];
+
+int playerInvulnerableTimer = 90; // Tempo de invulnerabilidade do player
 
 void initBullets()
 {
@@ -152,4 +154,47 @@ void shoot(Player *player)
             break;
         }
     }
+}
+
+bool checkPlayerCollision()
+{
+    // If player is invulnerable, don't check for collisions
+    if (playerInvulnerableTimer > 0)
+        return false;
+
+    for (int i = 0; i < MAX_ASTEROIDS; i++)
+    {
+        if (asteroids[i].active)
+        {
+            if (checkCollision(&player.box, &asteroids[i].box))
+            {
+                asteroids[i].active = 0;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool checkBulletsCollisions()
+{
+    for (int i = 0; i < MAX_BULLETS; i++)
+    {
+        if (bullets[i].active)
+        {
+            for (int j = 0; j < MAX_ASTEROIDS; j++)
+            {
+                if (asteroids[j].active)
+                {
+                    if (checkCollision(&bullets[i].box, &asteroids[j].box))
+                    {
+                        bullets[i].active = 0;
+                        asteroids[j].active = 0;
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
 }

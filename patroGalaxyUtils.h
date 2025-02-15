@@ -1,0 +1,4 @@
+#ifndef PATROGALAXY_H
+#define PATROGALAXY_H
+
+#endif // PATROGALAXY_H
