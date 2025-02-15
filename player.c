@@ -68,7 +68,15 @@ void initPlayer(Player *player)
     player->box.w = 14;
     player->box.h = 6;
 
-    // Inicializar partículas
+    initPlayerParticles(player);
+}
+
+/**
+ * @brief Inicializa as partículas do Player.
+ * @param player Ponteiro para a estrutura do Player.
+ */
+void initPlayerParticles(Player *player)
+{
     for (int i = 0; i < MAX_PARTICLES; i++)
     {
         player->particles[i].x = player->box.x;

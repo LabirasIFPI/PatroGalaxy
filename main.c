@@ -26,6 +26,9 @@
 #include "hardware/timer.h"
 #include "hardware/irq.h"
 
+// Images
+#include "ifpilogo.h"
+
 // Game Definitions
 #define STEP_CYCLE 3
 
@@ -232,11 +235,55 @@ int main()
     float amplitude;
     int _yAdd;
 
-    // Tela de inicialização para evitar bugs ao resetar na tela de título.
+    // Boot Screen
     clearDisplay();
-    drawTextCentered("Iniciando", -1);
+    drawTextCentered("Iniciando...", -1);
     ssd1306_show(&display);
     sleep_ms(69);
+
+    // Splash Screen
+    clearDisplay();
+    ssd1306_bmp_show_image_with_offset(&display, ifpilogo_bmp_data, ifpilogo_bmp_size, 128 - 64 - 32 - 2, 0);
+    ssd1306_show(&display);
+    sleep_ms(3000);
+
+    int splashTimer = 0;
+    bool introPlayerInitialized = false;
+    Player introPlayer = {.box = {.x = 0, .y = 0, .w = 16, .h = 16}};
+    while (splashTimer < 500)
+    {
+        clearDisplay();
+        int _y = 2;
+        int _spac = 8;
+        drawTextCentered("PatroGalaxy", _y);
+        _y += _spac;
+        drawTextCentered("Desenvolvido por:", _y);
+        _y += _spac + 2;
+        drawTextCentered("Luis Felipe", _y);
+        _y += _spac;
+        drawTextCentered("Patrocinio", _y);
+
+        // Draw Playership
+        int _shipX = SCREEN_WIDTH / 2 - 16 + cos(splashTimer / 26.9) * 5;
+        int _shipY = SCREEN_HEIGHT / 2 + 8 + sin(splashTimer / 36.9) * 2;
+        introPlayer.box.x = _shipX;
+        introPlayer.box.y = _shipY;
+        if (!introPlayerInitialized)
+        {
+            initPlayerParticles(&introPlayer);
+            introPlayerInitialized = true;
+        }
+        drawPlayer(&introPlayer);
+
+        // Particles
+
+        _y = SCREEN_HEIGHT - 12;
+        drawTextCentered("EmbarcaTech - 2025", _y);
+
+        showDisplay();
+        splashTimer += 1;
+        sleep_ms(STEP_CYCLE);
+    }
 
     // Apagar dados ao pressionar o botão A
     if (!gpio_get(BTA))

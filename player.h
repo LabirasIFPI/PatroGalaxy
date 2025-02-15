@@ -38,6 +38,8 @@ void movePlayer(Player *player, int deltaX, int deltaY);
 void drawPlayer(Player *player);
 bool checkPlayerCollision();
 
+void initPlayerParticles(Player *player);
+
 void initBullets();
 void updateBullets();
 void drawBullets();
