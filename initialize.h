@@ -3,11 +3,6 @@
 #include <stdint.h>
 #include "pico/stdlib.h"
 
-// Analógico
-#define ANALOG_X 27
-#define ANALOG_Y 26
-#define ANALOG_BTN 22
-
 // Buttons
 #define BTA 5
 #define BTB 6
