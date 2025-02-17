@@ -3,11 +3,13 @@
 #include <stdint.h>
 
 // General Imports
-#include "initialize.h"
-#include "utils.h"
 #include <math.h>
 #include <string.h>
 #include <time.h>
+
+// Project Utils Imports
+#include "initialize.h"
+#include "utils.h"
 #include "saveSystem.h"
 #include "display.h"
 #include "analog.h"
@@ -33,21 +35,21 @@
 #define STEP_CYCLE 3
 
 // Global Variables
-int lives = 3;                       // Número de vidas
-int score = 0;                       // Pontuação
-int scoreDraw = 0;                   // Pontuação a ser desenhada
-float gameSpeed = 1.0;               // Velocidade do jogo (aumenta com a pontuação)
+int lives = 3;                       // Number of lives
+int score = 0;                       // Score
+int scoreDraw = 0;                   // Score to be drawn
+float gameSpeed = 1.0;               // Game speed (increases with score)
 uint16_t highScore = 0;              // High Score
-bool newHighScore = false;           // Flag para indicar novo high score
-int playerSpawnTime = 30;            // Tempo de spawn do player
-int shootCooldown = 0;               // Cooldown de tiros
-int headerMode = 1;                  // 0 - Mostra High Score, 1 - Mostra Nome do Level
+bool newHighScore = false;           // Flag to indicate new high score
+int playerSpawnTime = 30;            // Player spawn time
+int shootCooldown = 0;               // Shoot cooldown
+int headerMode = 1;                  // 0 - Show High Score, 1 - Show Level Name
 int gameState = -1;                  // 0 - Menu, 1 - Game, 2 - Game Over
-int flashScreen = 0;                 // Flag para piscar a tela
-bool titleScreenInitialized = false; // Flag para indicar se a tela de título foi inicializada
-int transitionProgress = 100;        // Progresso da transição de estados
-int transitioningToState = -1;       // Variável de controle para transição de estados
-bool gameSaved = false;              // Variável de controle para impedir múltiplos salvamentos.
+int flashScreen = 0;                 // Flag to flash the screen
+bool titleScreenInitialized = false; // Flag to indicate if the title screen has been initialized
+int transitionProgress = 100;        // State transition progress
+int transitioningToState = -1;       // Control variable for state transition
+bool gameSaved = false;              // Control variable to prevent multiple saves
 
 void changeGameState(int state)
 {
@@ -123,7 +125,7 @@ void drawInterface()
     }
     else
     {
-        sprintf(headerText, "Espaco Sideral");
+        sprintf(headerText, "EmbarcaTech");
     }
     ssd1306_draw_string(&display, 0, 0, 1, headerText);
     ssd1306_draw_line(&display, 0, 9, SCREEN_WIDTH, 9);
@@ -383,7 +385,7 @@ int main()
 
             gameState = 1; // Game
 
-            // A cada intervalo de pontos, aumenta a velocidade do jogo
+            // Increase game speed at each score interval
             gameSpeed = 1.0 + (score / (300.0 + 100.0 * gameSpeed));
 
             if (playerSpawnTime > 0)
