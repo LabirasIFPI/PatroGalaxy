@@ -33,17 +33,12 @@ project(PatroGalaxy C CXX ASM)
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
-# Encontra todos os arquivos .c e .cpp em src/ e suas subpastas
-aux_source_directory(src SRC_FILES)
-
-# Adiciona o diretório src para que o compilador encontre os headers
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/assets
+file(GLOB_RECURSE SOURCE "src/**/*.c")
+add_executable(PatroGalaxy 
+${SOURCE}
 )
 
-# Cria o executável. Remove a listagem individual de arquivos
-add_executable(PatroGalaxy ${SRC_FILES})
+message(STATUS "Arquivos encontrados: ${SOURCE}")
 
 pico_set_program_name(PatroGalaxy "PatroGalaxy")
 pico_set_program_version(PatroGalaxy "0.2")
@@ -63,6 +58,17 @@ target_link_libraries(PatroGalaxy
     hardware_adc
     hardware_timer
     hardware_irq
+)
+
+# Add the standard include files to the build
+target_include_directories(PatroGalaxy PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/core
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/drivers
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/entities
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/graphics
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/utils
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/assets/images
 )
 
 pico_add_extra_outputs(PatroGalaxy)

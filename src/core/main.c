@@ -30,7 +30,7 @@
 #include "hardware/irq.h"
 
 // Images
-#include "assets/images/ifpilogo.h"
+#include "ifpilogo.h"
 
 // Game Definitions
 #define STEP_CYCLE 3
@@ -247,7 +247,7 @@ int main()
 
     // Splash Screen
     clearDisplay();
-    drawImage(&ifpilogo_bmp_data, ifpilogo_bmp_size, 30, 0);
+    drawImage(ifpilogo_bmp_data, ifpilogo_bmp_size, 30, 0);
     showDisplay();
     sleep_ms(3000);
 
