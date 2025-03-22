@@ -30,7 +30,7 @@
 #include "hardware/irq.h"
 
 // Images
-#include "ifpilogo.h"
+#include "assets/images/ifpilogo.h"
 
 // Game Definitions
 #define STEP_CYCLE 3

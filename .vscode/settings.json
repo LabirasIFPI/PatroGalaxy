@@ -47,6 +47,7 @@
         "ip_addr.h": "c",
         "irq.h": "c",
         "stdlib.h": "c",
-        "asteroids.h": "c"
+        "asteroids.h": "c",
+        "ifpilogo.h": "c"
     }
 }
