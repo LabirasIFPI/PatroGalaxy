@@ -33,42 +33,42 @@ project(PatroGalaxy C CXX ASM)
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
-# Add executable. Default name is the project name, version 0.1
-
-file(GLOB SOURCE "*.c")
-
-add_executable(PatroGalaxy main.c 
-lib/pico-ssd1306/ssd1306.c
+file(GLOB_RECURSE SOURCE "src/**/*.c")
+add_executable(PatroGalaxy 
 ${SOURCE}
 )
 
+message(STATUS "Arquivos encontrados: ${SOURCE}")
+
 pico_set_program_name(PatroGalaxy "PatroGalaxy")
-pico_set_program_version(PatroGalaxy "0.1")
+pico_set_program_version(PatroGalaxy "0.2")
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(PatroGalaxy 0)
+pico_enable_stdio_uart(PatroGalaxy 1)
 pico_enable_stdio_usb(PatroGalaxy 1)
 
-# Include the library path
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/lib/pico-ssd1306") 
+# Inclui o diretório da biblioteca pico-ssd1306
+add_subdirectory(lib/pico-ssd1306)
 
-# Add the standard library to the build
+# Vincula as bibliotecas necessárias
 target_link_libraries(PatroGalaxy
-        pico_stdlib)
-
-# Add the standard include files to the build
-target_include_directories(PatroGalaxy PRIVATE
-  ${CMAKE_CURRENT_LIST_DIR}
-  ${CMAKE_CURRENT_LIST_DIR}/lib/pico-ssd1306
+    pico_stdlib
+    pico-ssd1306
+    hardware_i2c
+    hardware_adc
+    hardware_timer
+    hardware_irq
 )
 
-# Add any user requested libraries
-target_link_libraries(PatroGalaxy 
-        hardware_i2c
-        hardware_adc
-        hardware_timer
-        hardware_irq
-        pico-ssd1306
-        )
+# Add the standard include files to the build
+target_include_directories(PatroGalaxy PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/core
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/drivers
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/entities
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/graphics
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/utils
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/assets/images
+)
 
 pico_add_extra_outputs(PatroGalaxy)

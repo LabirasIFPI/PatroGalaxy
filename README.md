@@ -45,15 +45,14 @@ cd PatroGalaxy
 
 ## Code Structure
 
-The code is organized into several modules, each responsible for a specific aspect of the game:
+The codebase is organized into the following key modules:
 
-- **`main.c`:** Contains the main game loop, state management, and initialization functions.
-- **`player.c` / `player.h`:** Manages the player character.
-- **`asteroid.c` / `asteroid.h`:** Controls the asteroid.
-- **`display.c` / `display.h`:** The screen is controlled in this code.
-- **`logic.c` / `logic.h`:** Control all the logic of the game.
-- **`utils.c` / `utils.h`:** Functions that was reused throughout the game.
-- **`ssd1306.c` / `ssd1306.h`:** This module is a driver of the SSD1306 display.
+-   **`src/core/`**: Core game logic and initialization.
+-   **`src/drivers/`**: Hardware drivers and abstractions (analog stick, OLED display, save system).
+-   **`src/entities/`**: Game entities and their behavior (player, asteroids, bounding box).
+-   **`src/graphics/`**: Graphical rendering functions.
+-   **`src/assets/`**: Game assets such as images, sounds, and fonts.
+-   **`lib/pico-ssd1306/`**: Third-party library for controlling the SSD1306 OLED display.
 
 ## Contributing
 

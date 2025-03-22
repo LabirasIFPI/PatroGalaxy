@@ -247,7 +247,7 @@ int main()
 
     // Splash Screen
     clearDisplay();
-    drawImage(&ifpilogo_bmp_data, ifpilogo_bmp_size, 30, 0);
+    drawImage(ifpilogo_bmp_data, ifpilogo_bmp_size, 30, 0);
     showDisplay();
     sleep_ms(3000);
 
