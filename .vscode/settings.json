@@ -46,6 +46,7 @@
         "timer.h": "c",
         "ip_addr.h": "c",
         "irq.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "asteroids.h": "c"
     }
 }

@@ -16,5 +16,6 @@ void initI2C();
 void initDisplay();
 void clearDisplay();
 void showDisplay();
+void invertDisplay(uint8_t invert);
 
 #endif // DISPLAY_H

@@ -14,6 +14,7 @@
 #include "display.h"
 #include "analog.h"
 #include "text.h"
+#include "draw.h"
 
 // Project-specific imports
 #include "player.h"
@@ -127,7 +128,7 @@ void drawInterface()
     {
         sprintf(headerText, "EmbarcaTech");
     }
-    ssd1306_draw_string(&display, 0, 0, 1, headerText);
+    drawText(0, 0, headerText);
     ssd1306_draw_line(&display, 0, 9, SCREEN_WIDTH, 9);
 
     steps++;
@@ -148,12 +149,12 @@ void drawInterface()
     // Draw Lives
     char text[50];
     sprintf(text, "Lives: %d", lives);
-    ssd1306_draw_string(&display, 0, SCREEN_HEIGHT - 8, 1, text);
+    drawText(0, SCREEN_HEIGHT - 8, text);
 
     // Draw Score
     scoreDraw = scoreDraw < score ? scoreDraw + 10 : score;
     sprintf(text, "Score: %d", scoreDraw);
-    ssd1306_draw_string(&display, SCREEN_WIDTH / 2 - 1, SCREEN_HEIGHT - 8, 1, text);
+    drawText(SCREEN_WIDTH / 2 - 1, SCREEN_HEIGHT - 8, text);
 }
 
 void drawTransition()
@@ -218,9 +219,10 @@ void playerDeath()
 
 int main()
 {
+    // Wait for 30 milliseconds before initialization to ensure proper startup timing
     sleep_ms(30);
 
-    // Inicialização
+    // Initialization
     stdio_init_all();
     initI2C();
     initDisplay();
@@ -239,20 +241,20 @@ int main()
 
     // Boot Screen
     clearDisplay();
-    drawTextCentered("Iniciando...", -1);
-    ssd1306_show(&display);
+    drawTextCentered("Initializing...", -1);
+    showDisplay();
     sleep_ms(69);
 
     // Splash Screen
     clearDisplay();
-    ssd1306_bmp_show_image_with_offset(&display, ifpilogo_bmp_data, ifpilogo_bmp_size, 128 - 64 - 32 - 2, 0);
-    ssd1306_show(&display);
+    drawImage(&ifpilogo_bmp_data, ifpilogo_bmp_size, 30, 0);
+    showDisplay();
     sleep_ms(3000);
 
     int splashTimer = 0;
     bool introPlayerInitialized = false;
     Player introPlayer = {.box = {.x = 0, .y = 0, .w = 16, .h = 16}};
-    while (splashTimer < 500)
+    while (splashTimer < 360)
     {
         clearDisplay();
         int _y = 2;
@@ -289,8 +291,8 @@ int main()
     if (!gpio_get(BTA))
     {
         clearDisplay();
-        ssd1306_draw_string(&display, 0, 0, 1, "Apagando dados...");
-        ssd1306_show(&display);
+        drawText(0, 0, "Apagando dados...");
+        showDisplay();
         clearSaveData();
         sleep_ms(2069);
     }
@@ -334,13 +336,13 @@ int main()
             moveStars(1.0);
             drawStars();
 
-            // PatroGalaxy
+            // PatroGalaxy Text
             for (int i = 0; i < strlen(patroName); i++)
             {
                 char letter[2] = {patroName[i], '\0'};
                 int _x = 64 - 5 * strlen(patroName) / 2 + 5 * i;
                 int _y = SCREEN_HEIGHT / 2 + sin(ang + i * 60) * amplitude + _yAdd;
-                ssd1306_draw_char(&display, _x, _y, 1, letter[0]);
+                drawText(_x, _y, letter);
             }
 
             // Press Start
@@ -348,7 +350,7 @@ int main()
             sprintf(startText, "Press Start");
             int _x = SCREEN_WIDTH / 2 - 5 * (strlen(startText) + 1) / 2;
             int _y = SCREEN_HEIGHT - 10;
-            ssd1306_draw_string(&display, _x, _y, 1, showPressStart ? startText : "");
+            drawText(_x, _y, showPressStart ? startText : "");
 
             // Draw Highscore
             if (highScore > 0)
@@ -357,7 +359,7 @@ int main()
                 sprintf(highScoreText, "Highscore: %d", highScore);
                 _x = SCREEN_WIDTH / 2 - 5 * (strlen(highScoreText) + 1) / 2;
                 _y = -8 + 15 - MIN(15, _yAdd);
-                ssd1306_draw_string(&display, _x, _y, 1, highScoreText);
+                drawText(_x, _y, highScoreText);
             }
 
             drawTransition();
@@ -372,7 +374,7 @@ int main()
                 introTime = 0;
             }
 
-            ssd1306_show(&display);
+            showDisplay();
             sleep_ms(STEP_CYCLE);
         }
 
@@ -436,16 +438,20 @@ int main()
             drawAsteroids();
             drawBullets();
 
+            // Draw Interface
             drawInterface();
 
+            // Draw Transition Above Everything
             drawTransition();
 
+            // Flash Screen
             flashScreen = flashScreen > 0 ? flashScreen - 1 : 0;
+            invertDisplay(flashScreen);
 
-            ssd1306_invert(&display, flashScreen);
+            // Update Display
+            showDisplay();
 
-            ssd1306_show(&display);
-
+            // Sleep Step Cycle
             sleep_ms(STEP_CYCLE);
         }
 
@@ -482,13 +488,13 @@ int main()
             sprintf(gameOverText, "Game Over");
             int _x = SCREEN_WIDTH / 2 - 5 * (strlen(gameOverText) + 1) / 2;
             int _y = SCREEN_HEIGHT / 2 - 6;
-            ssd1306_draw_string(&display, _x, _y, 1, "Game Over");
+            drawText(_x, _y, "Game Over");
 
             char scoreText[50];
             sprintf(scoreText, "Score: %d", score);
             _x = SCREEN_WIDTH / 2 - 5 * (strlen(scoreText) + 1) / 2;
             _y = SCREEN_HEIGHT / 2 - 6 + 12;
-            ssd1306_draw_string(&display, _x, _y, 1, scoreText);
+            drawText(_x, _y, scoreText);
 
             if (newHighScore)
             {
@@ -496,15 +502,15 @@ int main()
                 sprintf(newRecordText, "New record!");
                 _x = SCREEN_WIDTH / 2 - 5 * (strlen(newRecordText) + 1) / 2;
                 _y = SCREEN_HEIGHT / 2 - 6 + 24;
-                ssd1306_draw_string(&display, _x, _y, 1, newRecordText);
+                drawText(_x, _y, newRecordText);
             }
 
             drawTransition();
-            ssd1306_show(&display);
+            showDisplay();
             sleep_ms(STEP_CYCLE);
         }
 
         clearDisplay();
-        ssd1306_show(&display);
+        showDisplay();
     }
 }

@@ -64,3 +64,8 @@ void showDisplay()
 {
     ssd1306_show(&display);
 }
+
+void invertDisplay(uint8_t invert)
+{
+    ssd1306_invert(&display, invert);
+}
