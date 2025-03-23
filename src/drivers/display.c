@@ -1,3 +1,13 @@
+/**
+ * @file display.c
+ * @brief Driver for initializing and controlling the SSD1306 display using I2C.
+ *
+ * This file contains functions to initialize the I2C interface and the SSD1306 display,
+ * clear the display, show content on the display, and invert display colors.
+ *
+ * @note Ensure that the I2C peripheral and GPIO pins are correctly defined and available in your hardware setup.
+ */
+
 #include "display.h"
 ssd1306_t display;
 
