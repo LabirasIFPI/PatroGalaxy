@@ -109,7 +109,7 @@ $(function(){initNavTree('display_8c.html',''); initResizable(true); });
 </div><!--header-->
 <div class="contents">
 
-<p>This file contains the implementation of the display functionalities.  
+<p>Driver for initializing and controlling the SSD1306 display using I2C.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="display_8h_source.html">display.h</a>&quot;</code><br />
 </div><table class="memberdecls">
@@ -138,11 +138,9 @@ Variables</h2></td></tr>
 <tr class="separator:ad3df5bad4be6ff9b61269e2e0e0595e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>This file contains the implementation of the display functionalities. </p>
-<p>The <a class="el" href="display_8c.html" title="This file contains the implementation of the display functionalities.">display.c</a> file provides functions to initialize, configure, and control the display hardware. It includes routines for setting up the display, updating the display content, and handling display-related events.</p>
-<dl class="section author"><dt>Author</dt><dd>[Your Name] </dd></dl>
-<dl class="section date"><dt>Date</dt><dd>[Date] </dd></dl>
-<dl class="section version"><dt>Version</dt><dd>[Version] </dd></dl>
+<div class="textblock"><p>Driver for initializing and controlling the SSD1306 display using I2C. </p>
+<p>This file contains functions to initialize the I2C interface and the SSD1306 display, clear the display, show content on the display, and invert display colors.</p>
+<dl class="section note"><dt>Note</dt><dd>Ensure that the I2C peripheral and GPIO pins are correctly defined and available in your hardware setup. </dd></dl>
 </div><h2 class="groupheader">Function Documentation</h2>
 <a id="afaa5f070126ac5184a648b484e7cf276" name="afaa5f070126ac5184a648b484e7cf276"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#afaa5f070126ac5184a648b484e7cf276">&#9670;&#160;</a></span>clearDisplay()</h2>

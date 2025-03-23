@@ -1,0 +1,38 @@
+name: Doxygen Documentation
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Install Doxygen and Graphviz
+        run: |
+          sudo apt-get update
+          sudo apt-get install doxygen graphviz
+
+      - name: Generate Doxygen documentation
+        run: doxygen Doxyfile
+
+      - name: Move Doxygen output to root
+        run: |
+          cd docs/html
+          mv * ../
+          cd ..
+          rmdir html
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: docs 

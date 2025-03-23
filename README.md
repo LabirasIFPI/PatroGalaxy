@@ -47,12 +47,12 @@ cd PatroGalaxy
 
 The codebase is organized into the following key modules:
 
--   **`src/core/`**: Core game logic and initialization.
--   **`src/drivers/`**: Hardware drivers and abstractions (analog stick, OLED display, save system).
--   **`src/entities/`**: Game entities and their behavior (player, asteroids, bounding box).
--   **`src/graphics/`**: Graphical rendering functions.
--   **`src/assets/`**: Game assets such as images, sounds, and fonts.
--   **`lib/pico-ssd1306/`**: Third-party library for controlling the SSD1306 OLED display.
+- **`src/core/`**: Core game logic and initialization.
+- **`src/drivers/`**: Hardware drivers and abstractions (analog stick, OLED display, save system).
+- **`src/entities/`**: Game entities and their behavior (player, asteroids, bounding box).
+- **`src/graphics/`**: Graphical rendering functions.
+- **`src/assets/`**: Game assets such as images, sounds, and fonts.
+- **`pico-ssd1306/`**: Third-party library for controlling the SSD1306 OLED display.
 
 ## Contributing
 
@@ -68,3 +68,7 @@ This project is intended to be a valuable resource for the embedded systems comm
 If you have any questions or feedback, feel free to contact me:
 
 - [Github](https://github.com/luisfpatrocinio)
+
+## Author
+
+Luis Felipe dos Santos Patrocinio
