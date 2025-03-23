@@ -48,7 +48,7 @@ pico_enable_stdio_uart(PatroGalaxy 1)
 pico_enable_stdio_usb(PatroGalaxy 1)
 
 # Inclui o diretório da biblioteca pico-ssd1306
-add_subdirectory(lib/pico-ssd1306)
+add_subdirectory(pico-ssd1306)
 
 # Vincula as bibliotecas necessárias
 target_link_libraries(PatroGalaxy
