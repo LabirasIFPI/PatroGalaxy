@@ -57,7 +57,7 @@ void drawTextCentered(char *text, int _y)
         _y = SCREEN_HEIGHT / 2 - 6;
     }
     int _x = SCREEN_WIDTH / 2 - 6 * strlen(text) / 2 - 1;
-    ssd1306_draw_string(&display, _x, _y, 1, text);
+    drawText(_x, _y, text);
 }
 
 /**
