@@ -1,3 +1,11 @@
+/**
+ * @file player.c
+ * @brief Implementation for the player module.
+ *
+ * This module manages the player character, including its movement,
+ * drawing, collision detection, and bullets.
+ */
+
 #include "player.h"
 #include "initialize.h"
 
@@ -14,14 +22,26 @@
 #include "boundingBox.h"
 #include "asteroids.h"
 
-// Definição do Player (global)
+/**
+ * @brief Global variable for the Player.
+ */
 Player player;
 
-// Definição das balas (global)
+/**
+ * @brief Global array for the bullets.
+ */
 Bullet bullets[MAX_BULLETS];
 
-int playerInvulnerableTimer = 90; // Tempo de invulnerabilidade do player
+/**
+ * @brief Time of invulnerability for player
+ */
+int playerInvulnerableTimer = 90;
 
+/**
+ * @brief Initializes the bullets.
+ *
+ * Set all bullets to innactive
+ */
 void initBullets()
 {
     for (int i = 0; i < MAX_BULLETS; i++)
@@ -30,6 +50,11 @@ void initBullets()
     }
 }
 
+/**
+ * @brief Updates the bullets.
+ *
+ * Moves the bullets, checks their bounds.
+ */
 void updateBullets()
 {
     for (int i = 0; i < MAX_BULLETS; i++)
@@ -46,6 +71,11 @@ void updateBullets()
     }
 }
 
+/**
+ * @brief Draws the bullets.
+ *
+ * Print all active bullets to the screen
+ */
 void drawBullets()
 {
     for (int i = 0; i < MAX_BULLETS; i++)
@@ -58,8 +88,12 @@ void drawBullets()
 }
 
 /**
- * @brief Inicializa o Player na posição central da tela.
- * @param player Ponteiro para a estrutura do Player.
+ * @brief Initializes the Player in the center of the screen.
+ *
+ * Sets the Player's initial position and dimensions.
+ *
+ * @param player Pointer to the Player structure.
+ * @note The Player will spawn outside of the screen, and after the transition effect ends, the player will be playable
  */
 void initPlayer(Player *player)
 {
@@ -72,8 +106,11 @@ void initPlayer(Player *player)
 }
 
 /**
- * @brief Inicializa as partículas do Player.
- * @param player Ponteiro para a estrutura do Player.
+ * @brief Initializes the Player's particles.
+ *
+ * Sets the initial position, direction, and time for each particle.
+ *
+ * @param player Pointer to the Player structure.
  */
 void initPlayerParticles(Player *player)
 {
@@ -87,26 +124,38 @@ void initPlayerParticles(Player *player)
 }
 
 /**
- * @brief Limitar posição do player dentro dos limites da tela.
- * @param player Ponteiro para a estrutura do Player.
+ * @brief Limitar position of the player inside the limits of the screen.
+ *
+ * Limits the player's position within the screen boundaries.
+ *
+ * @param player Pointer to the Player structure.
  */
 void limitPlayerPosition(Player *player)
 {
     int limitY = 10;
 
-    // Limitar posição no eixo X
+    // Limitar position in X axis
     if (player->box.x - player->box.w / 2 < 0)
         player->box.x = player->box.w / 2;
     if (player->box.x + player->box.w / 2 >= SCREEN_WIDTH)
         player->box.x = SCREEN_WIDTH - player->box.w / 2;
 
-    // Limitar posição no eixo Y
+    // Limitar position in Y axis
     if (player->box.y - player->box.h / 2 < limitY)
         player->box.y = limitY + player->box.h / 2;
     if (player->box.y + player->box.h / 2 >= SCREEN_HEIGHT - limitY)
         player->box.y = SCREEN_HEIGHT - limitY - player->box.h / 2;
 }
 
+/**
+ * @brief Moves the Player based on input.
+ *
+ * Updates the player's position based on the input from the analog stick.
+ *
+ * @param player Pointer to the Player structure.
+ * @param deltaX Change in X position.
+ * @param deltaY Change in Y position.
+ */
 void movePlayer(Player *player, int deltaX, int deltaY)
 {
     player->box.x += deltaX / 2;
@@ -119,10 +168,17 @@ void movePlayer(Player *player, int deltaX, int deltaY)
     // printf("Player position: (%d, %d)\n", player->box.x, player->box.y);
 }
 
+/**
+ * @brief Draws the Player.
+ *
+ * Draws the spaceship using the current location, and draws particles.
+ *
+ * @param player Pointer to the Player structure.
+ */
 void drawPlayer(Player *player)
 {
     char text[4] = "]=D";
-    int textWidth = 5 * strlen(text); // Assumindo que a fonte padrão tem 5 pixels de largura
+    int textWidth = 5 * strlen(text); // Assuming that the default font has 5 pixels of width
     ssd1306_draw_string(&display, player->box.x - player->box.w / 2, player->box.y, 1, text);
 
     // Draw Particles
@@ -146,6 +202,13 @@ void drawPlayer(Player *player)
     }
 }
 
+/**
+ * @brief Makes the player shoot.
+ *
+ * Creates a new bullet and adds it to the active bullets list.
+ *
+ * @param player Pointer to the Player structure.
+ */
 void shoot(Player *player)
 {
     for (int i = 0; i < MAX_BULLETS; i++)
@@ -164,9 +227,18 @@ void shoot(Player *player)
     }
 }
 
+/**
+ * @brief Checks for collisions between the Player and asteroids.
+ *
+ * Checks if the Player's bounding box intersects with any active asteroid's
+ * bounding box.
+ *
+ * @return true if a collision occurs, false otherwise.
+ * @note The variable `playerInvulnerableTimer` prevent the player of dying in start of game or after a respawn.
+ */
 bool checkPlayerCollision()
 {
-    // If player is invulnerable, don't check for collisions
+    // Se o player está invulnerável, não verificar colisões
     if (playerInvulnerableTimer > 0)
         return false;
 
@@ -184,6 +256,14 @@ bool checkPlayerCollision()
     return false;
 }
 
+/**
+ * @brief Checks for collisions between the bullets and asteroids.
+ *
+ * Checks if any active bullet's bounding box intersects with any active
+ * asteroid's bounding box.
+ *
+ * @return true if a collision occurs, false otherwise.
+ */
 bool checkBulletsCollisions()
 {
     for (int i = 0; i < MAX_BULLETS; i++)

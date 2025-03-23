@@ -48,6 +48,8 @@
         "irq.h": "c",
         "stdlib.h": "c",
         "asteroids.h": "c",
-        "ifpilogo.h": "c"
+        "ifpilogo.h": "c",
+        "functional": "c",
+        "stdio.h": "c"
     }
 }

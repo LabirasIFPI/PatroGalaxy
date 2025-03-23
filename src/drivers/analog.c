@@ -1,6 +1,19 @@
+/**
+ * @file analog.c
+ * @brief Implementation for the analog input module.
+ *
+ * This module handles reading analog values from the analog stick
+ * and applying a deadzone.
+ */
+
 #include "analog.h"
+#include <stdio.h>
+
+/** @brief Store for last axis value - X*/
 int analog_x = 0;
+/** @brief Store for last axis value - Y */
 int analog_y = 0;
+
 /**
  * @brief Initializes the analog inputs and button.
  *
@@ -19,6 +32,15 @@ void initAnalog()
     gpio_pull_up(ANALOG_BTN);
 }
 
+/**
+ * @brief Reads analog Y axis value.
+ *
+ * This function select the gpio that represents the axis Y, reads the adc value,
+ * map the value from a range to another and after it apply a threshold to reduce sensibility
+ *
+ * @return The calibrated analog value for the Y axis, with deadzone applied.
+ * @note The ANALOG_Y definition must be a valid ADC pin. This is a axis that must be inverted because of the analog system
+ */
 int32_t readAnalogY()
 {
     adc_select_input(0);
@@ -28,6 +50,15 @@ int32_t readAnalogY()
     return applyThreshold(inverted_value);
 }
 
+/**
+ * @brief Reads analog X axis value.
+ *
+ * This function select the gpio that represents the axis X, reads the adc value,
+ * map the value from a range to another and after it apply a threshold to reduce sensibility
+ *
+ * @return The calibrated analog value for the X axis, with deadzone applied.
+ * @note The ANALOG_X definition must be a valid ADC pin.
+ */
 int32_t readAnalogX()
 {
     adc_select_input(1);
@@ -36,6 +67,15 @@ int32_t readAnalogX()
     return applyThreshold(mapped_value);
 }
 
+/**
+ * @brief Applies a deadzone threshold to a value.
+ *
+ * This function checks if the given value is within the defined deadzone range.
+ * If it is, the function returns 0, otherwise, it returns the original value.
+ *
+ * @param value The value to apply the threshold to.
+ * @return The original value if outside the deadzone, 0 otherwise.
+ */
 int32_t applyThreshold(int32_t value)
 {
     if (value > DEADZONE || value < -DEADZONE)
@@ -48,6 +88,11 @@ int32_t applyThreshold(int32_t value)
     }
 }
 
+/**
+ * @brief Updates analog axis values.
+ *
+ * Reads current value to both axis in the system.
+ */
 void updateAxis()
 {
     analog_x = readAnalogX();

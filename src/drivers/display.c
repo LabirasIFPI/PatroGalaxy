@@ -64,6 +64,17 @@ void showDisplay()
 {
     ssd1306_show(&display);
 }
+/**
+ * @brief Inverts the display colors.
+ *
+ * This function inverts the colors of the display. When the invert parameter
+ * is set to a non-zero value, the display colors will be inverted. When the
+ * invert parameter is set to zero, the display colors will return to normal.
+ *
+ * @param invert A uint8_t value indicating whether to invert the display colors.
+ *               - 0: Normal display colors.
+ *               - Non-zero: Inverted display colors.
+ */
 
 void invertDisplay(uint8_t invert)
 {

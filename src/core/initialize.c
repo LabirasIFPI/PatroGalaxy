@@ -13,12 +13,12 @@ typedef void (*callback_t)(uint gpio, uint32_t events);
  * configuring them as input, enabling pull-up resistors, and setting up an interrupt
  * on the rising edge with the provided callback function.
  *
- * @param handleButtonGpioEvent The callback function to be called when a button is pressed.
+ * @param handleButtonGPIOEvent The callback function to be called when a button is pressed.
  *                         If NULL, the function returns immediately without initializing the buttons.
  */
-void initButtons(callback_t handleButtonGpioEvent)
+void initButtons(callback_t handleButtonGPIOEvent)
 {
-    if (handleButtonGpioEvent == NULL)
+    if (handleButtonGPIOEvent == NULL)
         return;
     int buttons[2] = {BTA, BTB};
     for (int i = 0; i < 2; i++)
@@ -26,7 +26,7 @@ void initButtons(callback_t handleButtonGpioEvent)
         gpio_init(buttons[i]);
         gpio_set_dir(buttons[i], GPIO_IN);
         gpio_pull_up(buttons[i]);
-        gpio_set_irq_enabled_with_callback(buttons[i], GPIO_IRQ_EDGE_RISE, true, handleButtonGpioEvent);
+        gpio_set_irq_enabled_with_callback(buttons[i], GPIO_IRQ_EDGE_RISE, true, handleButtonGPIOEvent);
         printf("Botão %d inicializado\n", i);
     }
 }

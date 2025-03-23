@@ -8,7 +8,6 @@
 #define BTB 6
 
 void initButtons(void (*handleButtonGpioEvent)(uint gpio, uint32_t events));
-int32_t mapValue();
 
 // Display
 #define SCREEN_WIDTH 128

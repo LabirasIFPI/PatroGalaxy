@@ -1,3 +1,11 @@
+/**
+ * @file main.c
+ * @brief Main source file for the PatroGalaxy game.
+ *
+ * This file contains the main game loop, state management,
+ * and initialization routines for the PatroGalaxy game.
+ */
+
 // Standard library imports
 #include <stdio.h>
 #include <stdint.h>
@@ -33,26 +41,65 @@
 #include "ifpilogo.h"
 
 // Game Definitions
+/** @brief The time of every cicle */
 #define STEP_CYCLE 3
 
-// Global Variables
-int lives = 3;                       // Number of lives
-int score = 0;                       // Score
-int scoreDraw = 0;                   // Score to be drawn
-float gameSpeed = 1.0;               // Game speed (increases with score)
-uint16_t highScore = 0;              // High Score
-bool newHighScore = false;           // Flag to indicate new high score
-int playerSpawnTime = 30;            // Player spawn time
-int shootCooldown = 0;               // Shoot cooldown
-int headerMode = 1;                  // 0 - Show High Score, 1 - Show Level Name
-int gameState = -1;                  // 0 - Menu, 1 - Game, 2 - Game Over
-int flashScreen = 0;                 // Flag to flash the screen
-bool titleScreenInitialized = false; // Flag to indicate if the title screen has been initialized
-int transitionProgress = 100;        // State transition progress
-int transitioningToState = -1;       // Control variable for state transition
-bool gameSaved = false;              // Control variable to prevent multiple saves
+/**
+ * @brief Enum to represent the game states.
+ */
+enum GAME_STATES
+{
+    /** @brief Initializing state*/
+    INITIALIZING = -1, // Initializing
+    /** @brief Title Screen state*/
+    TITLE_SCREEN = 0, // Title Screen
+    /** @brief Game running state*/
+    GAME = 1, // Game
+    /** @brief Game over state*/
+    GAME_OVER = 2, // Game Over
+};
 
-void changeGameState(int state)
+// Global Variables
+/** @brief The number of lives available to player */
+int lives = 3;
+/** @brief The score of the game */
+int score = 0;
+/** @brief The value the the game will to draw (animated) */
+int scoreDraw = 0;
+/** @brief Game Speed, affects the game logic */
+float gameSpeed = 1.0;
+/** @brief Hightscore in a previous game */
+uint16_t highScore = 0;
+/** @brief Flag for a new hightscore or not */
+bool newHighScore = false;
+/** @brief Time of the player spawn on the screen */
+int playerSpawnTime = 30;
+/** @brief Time before the player shoot again */
+int shootCooldown = 0;
+/** @brief Header display mode (0 to show High Score, 1 to show Level Name)*/
+int headerMode = 1;
+/** @brief Flag for flash the screen on or off*/
+int flashScreen = 0;
+/** @brief If initializations has already happened */
+bool titleScreenInitialized = false;
+/** @brief Current state of the game */
+enum GAME_STATES gameState = INITIALIZING;
+/** @brief Progress control on screen transition */
+int transitionProgress = 100;
+/** @brief Control Variable of the game on state transition */
+int transitioningToState = -1;
+/** @brief Prevents the player of saving the record every time a value is hit*/
+bool gameSaved = false;
+
+/**
+ * @brief Changes the game state.
+ *
+ * Transitions the game to a new state by setting the `transitioningToState`
+ * variable and initiating the transition effect.
+ *
+ * @param state The new game state (a value from the GAME_STATES enum).
+ */
+void changeGameState(enum GAME_STATES state)
 {
     transitioningToState = state;
     transitionProgress = 0;
@@ -62,12 +109,12 @@ void changeGameState(int state)
  * @brief Callback function to handle GPIO events.
  *
  * This function is called when a GPIO event occurs. It checks the current game state
- * and performs actions based on the GPIO pin that triggered the event.///@func
+ * and performs actions based on the GPIO pin that triggered the event.
  *
  * @param gpio The GPIO pin number that triggered the event.
  * @param events The event mask indicating the type of event that occurred.
  */
-void handleButtonGpioEvent(uint gpio, uint32_t events)
+void handleButtonGPIOEvent(uint gpio, uint32_t events)
 {
     switch (gameState)
     {
@@ -75,7 +122,7 @@ void handleButtonGpioEvent(uint gpio, uint32_t events)
         if (gpio == BTB)
         {
             if (transitioningToState == -1)
-                changeGameState(1);
+                changeGameState(GAME);
         }
         break;
     case 1: // Game
@@ -93,7 +140,7 @@ void handleButtonGpioEvent(uint gpio, uint32_t events)
         {
             if (transitioningToState == -1)
             {
-                changeGameState(0);
+                changeGameState(TITLE_SCREEN);
                 titleScreenInitialized = false;
             }
         }
@@ -107,7 +154,7 @@ void handleButtonGpioEvent(uint gpio, uint32_t events)
  * @brief Draws the user interface on the SSD1306 display.
  *
  * This function updates the display with the current interface elements, including the header, bottom bar, lives, and score.
- * The header alternates between displaying the IP address and a static text "Espaco Sideral" every 100 steps.
+ * The header alternates between displaying the IP address and a static text "EmbarcaTech" every 100 steps.
  * The bottom bar displays the current number of lives and the score.
  *
  * @note The function assumes the existence of global variables: `display`, `headerMode`, `ip_str`, `steps`, `lives`, `score`, and `scoreDraw`.
@@ -157,13 +204,31 @@ void drawInterface()
     drawText(SCREEN_WIDTH / 2 - 1, SCREEN_HEIGHT - 8, text);
 }
 
+/**
+ * @brief Draws a transition effect on the screen.
+ *
+ * This function handles the transition effect by updating the transition progress
+ * and drawing a rectangle that covers the screen based on the current progress.
+ * The transition progress is incremented or decremented based on whether the
+ * transition is fading out or not. The progress is clamped between 0 and 100.
+ * When the transition progress reaches 100 and a new state is specified, the
+ * game state is updated to the new state.
+ *
+ * @note The function assumes the existence of the following global variables:
+ * - transitioningToState: An integer representing the state to transition to.
+ *   A value of -1 indicates no transition.
+ * - transitionProgress: An integer representing the current progress of the transition.
+ * - gameState: An integer representing the current game state.
+ * - SCREEN_HEIGHT: An integer representing the height of the screen.
+ * - SCREEN_WIDTH: An integer representing the width of the screen.
+ * - display: A display object used for drawing.
+ *
+ * The function uses the ssd1306_clear_square function to draw the transition effect.
+ */
 void drawTransition()
 {
-    if (transitioningToState == -1 && transitionProgress == 0)
-    {
-        // return;
-    }
-    transitionProgress += 6 * (1 - (2 * (transitioningToState == -1)));
+    int fadingOut = (transitioningToState == -1);
+    transitionProgress += 6 * (1 - (2 * (fadingOut)));
 
     // Limit values between 0 and 100
     transitionProgress = transitionProgress > 100 ? 100 : transitionProgress;
@@ -175,7 +240,7 @@ void drawTransition()
         transitioningToState = -1;
     }
 
-    // Desenhar um retangulo cobrindo a tela com base no valor de startProgress
+    // Draw a rectangle covering the screen based on the value of startProgress
     int rectHeight = (SCREEN_HEIGHT * transitionProgress) / 100;
     if (transitionProgress >= 100)
     {
@@ -184,6 +249,18 @@ void drawTransition()
     ssd1306_clear_square(&display, 0, SCREEN_HEIGHT - rectHeight, SCREEN_WIDTH, rectHeight);
 }
 
+/**
+ * @brief Handles the player's death event.
+ *
+ * This function is called when the player dies. It decrements the player's lives,
+ * sets the player to be invulnerable for a short period, and respawns the player
+ * at a specific location. If the player has no remaining lives, it changes the game state
+ * to the game over state and checks if the current score is a new high score. If a new high score
+ * is achieved, it saves the high score.
+ *
+ * @note This function assumes the existence of global variables such as `lives`, `playerInvulnerableTimer`,
+ * `playerSpawnTime`, `player`, `flashScreen`, `score`, `highScore`, `newHighScore`, and `gameSaved`.
+ */
 void playerDeath()
 {
     lives--;
@@ -196,7 +273,7 @@ void playerDeath()
 
     if (lives == 0)
     {
-        changeGameState(2);
+        changeGameState(GAME_OVER);
 
         // Check high score
         if (score > highScore)
@@ -206,7 +283,7 @@ void playerDeath()
             if (!gameSaved)
             {
                 printf("New highscore: %d\n", highScore);
-                // Criar um buffer para guardar o highscore
+                // Create a buffer to store the high score
                 uint8_t buffer[2];
                 createBuffer(highScore, buffer);
                 saveProgress(buffer);
@@ -217,6 +294,12 @@ void playerDeath()
     }
 }
 
+/**
+ * @brief Main function of the PatroGalaxy game.
+ *
+ * This function initializes the hardware, loads the high score, and runs the game loop.
+ * The game loop handles the title screen, the game itself, and the game over screen.
+ */
 int main()
 {
     // Wait for 30 milliseconds before initialization to ensure proper startup timing
@@ -228,16 +311,15 @@ int main()
     initDisplay();
     clearDisplay();
     initAnalog();
-    initButtons(handleButtonGpioEvent);
+    initButtons(handleButtonGPIOEvent);
     initStars();
 
     // Title Screen Variables
-    int introTime;
-    char patroName[50];
-    int showPressStart;
-    int pressStart;
-    float amplitude;
-    int _yAdd;
+    int introTime;      // Time since the title screen started
+    char patroName[50]; // Name of the game
+    int showPressStart; // Flag to show the "Press Start" text
+    float amplitude;    // Amplitude of the title screen text
+    int _yAdd;          // Y offset for the title screen text
 
     // Boot Screen
     clearDisplay();
@@ -254,7 +336,7 @@ int main()
     int splashTimer = 0;
     bool introPlayerInitialized = false;
     Player introPlayer = {.box = {.x = 0, .y = 0, .w = 16, .h = 16}};
-    while (splashTimer < 360)
+    while (splashTimer < 220)
     {
         clearDisplay();
         int _y = 2;
@@ -287,18 +369,18 @@ int main()
         sleep_ms(STEP_CYCLE);
     }
 
-    // Apagar dados ao pressionar o botão A
+    // Erase data when button A is pressed
     if (!gpio_get(BTA))
     {
         clearDisplay();
-        drawText(0, 0, "Apagando dados...");
+        drawText(0, 0, "Erasing data...");
         showDisplay();
         clearSaveData();
         sleep_ms(2069);
     }
 
-    gameState = 0;
-
+    // Main Loop
+    gameState = TITLE_SCREEN;
     while (true)
     {
         // Title Screen
@@ -310,7 +392,6 @@ int main()
                 introTime = 0;
                 strcpy(patroName, "PatroGalaxy");
                 showPressStart = 0;
-                pressStart = 0;
                 amplitude = 8.0;
                 _yAdd = 64;
                 lives = 3;
@@ -358,7 +439,7 @@ int main()
                 char highScoreText[50];
                 sprintf(highScoreText, "Highscore: %d", highScore);
                 _x = SCREEN_WIDTH / 2 - 5 * (strlen(highScoreText) + 1) / 2;
-                _y = -8 + 15 - MIN(15, _yAdd);
+                int _y = -8 + 15 - MIN(15, _yAdd);
                 drawText(_x, _y, highScoreText);
             }
 
@@ -500,8 +581,8 @@ int main()
             {
                 char newRecordText[50];
                 sprintf(newRecordText, "New record!");
-                _x = SCREEN_WIDTH / 2 - 5 * (strlen(newRecordText) + 1) / 2;
-                _y = SCREEN_HEIGHT / 2 - 6 + 24;
+                int _x = SCREEN_WIDTH / 2 - 5 * (strlen(newRecordText) + 1) / 2;
+                int _y = SCREEN_HEIGHT / 2 - 6 + 24;
                 drawText(_x, _y, newRecordText);
             }
 
