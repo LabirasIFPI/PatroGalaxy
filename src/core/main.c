@@ -384,7 +384,7 @@ int main()
     while (true)
     {
         // Title Screen
-        while (gameState == 0)
+        while (gameState == TITLE_SCREEN)
         {
 
             if (!titleScreenInitialized)
@@ -462,7 +462,7 @@ int main()
         initAsteroids();
 
         // Game State
-        while (gameState == 1)
+        while (gameState == GAME)
         {
             clearDisplay();
 
@@ -538,7 +538,7 @@ int main()
 
         int gameOverTime = 0;
         // Game Over
-        while (gameState == 2)
+        while (gameState == GAME_OVER)
         {
             clearDisplay();
 

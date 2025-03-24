@@ -8,6 +8,12 @@
 
 PatroGalaxy is a classic space shooter game developed specifically for the [BitDogLab](https://github.com/BitDogLab/BitDogLab) embedded systems learning platform. It serves as a practical demonstration of embedded programming techniques using the Raspberry Pi Pico W microcontroller.
 
+See PatroGalaxy in action! Watch the project overview video:
+
+[![PatroGalaxy Demo Video](http://img.youtube.com/vi/mwKkf3WDbOc/0.jpg)](https://www.youtube.com/watch?v=mwKkf3WDbOc)
+
+[Watch the overview video on YouTube](https://www.youtube.com/watch?v=mwKkf3WDbOc)
+
 This project showcases the capabilities of the BitDogLab, including its OLED display, analog stick, action button, and flash memory, within the engaging context of a retro-style arcade game.
 
 ## Features
