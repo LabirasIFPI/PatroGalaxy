@@ -2,6 +2,9 @@
  * @file main.c
  * @brief Main source file for the PatroGalaxy game.
  *
+ * @author Luis Felipe Patrocinio <patrocinioluisf@gmail.com>
+ * @version 0.2
+ *
  * This file contains the main game loop, state management,
  * and initialization routines for the PatroGalaxy game.
  */
@@ -34,8 +37,8 @@
 #include "pico/stdlib.h"
 
 // Clock Definitions
-#include "hardware/timer.h"
-#include "hardware/irq.h"
+// #include "hardware/timer.h"  // Deactivated for now.
+// #include "hardware/irq.h"    // Deactivated for now.
 
 // Images
 #include "ifpilogo.h"

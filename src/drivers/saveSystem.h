@@ -7,7 +7,13 @@
 #define SAVESYSTEM_H
 
 #include "pico/stdlib.h"
+
+// Library for flash memory operations
 #include "hardware/flash.h"
+
+// The "hardware/sync.h" library provides synchronization primitives and
+// functions for managing critical sections, ensuring safe access to shared
+// resources in concurrent or interrupt-driven environments.
 #include "hardware/sync.h"
 
 /**

@@ -50,6 +50,9 @@
         "asteroids.h": "c",
         "ifpilogo.h": "c",
         "functional": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "string.h": "c",
+        "time.h": "c",
+        "stdint.h": "c"
     }
 }
