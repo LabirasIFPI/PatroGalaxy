@@ -44,17 +44,10 @@ This project showcases the capabilities of the BitDogLab, including its OLED dis
    cd PatroGalaxy
    ```
 
-2. **Initialize submodules:**  
-   This project uses submodules to manage dependencies. After cloning, run the following command to initialize and update the submodules:
-
-   ```bash
-   git submodule update --init --recursive
-   ```
-
-3. **Configure the build environment:** Follow the instructions for setting up the Raspberry Pi Pico SDK.
-4. **Compile the code:** Use the appropriate build commands for your environment.
-5. **Flash the code onto the Raspberry Pi Pico W:** Use the appropriate tools for flashing the code onto the microcontroller.
-6. **Enjoy PatroGalaxy on your BitDogLab!**
+2. **Configure the build environment:** Follow the instructions for setting up the Raspberry Pi Pico SDK.
+3. **Compile the code:** Use the appropriate build commands for your environment.
+4. **Flash the code onto the Raspberry Pi Pico W:** Use the appropriate tools for flashing the code onto the microcontroller.
+5. **Enjoy PatroGalaxy on your BitDogLab!**
 
 ## Code Structure
 
@@ -64,8 +57,7 @@ The codebase is organized into the following key modules:
 - **`src/drivers/`**: Hardware drivers and abstractions (analog stick, OLED display, save system).
 - **`src/entities/`**: Game entities and their behavior (player, asteroids, bounding box).
 - **`src/graphics/`**: Graphical rendering functions.
-- **`src/assets/`**: Game assets such as images, sounds, and fonts.
-- **`pico-ssd1306/`**: Third-party library for controlling the SSD1306 OLED display.
+- **`src/assets/`**: Game assets such as images, and fonts.
 
 ## Contributing
 

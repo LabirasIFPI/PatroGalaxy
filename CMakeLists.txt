@@ -47,13 +47,9 @@ pico_set_program_version(PatroGalaxy "0.2")
 pico_enable_stdio_uart(PatroGalaxy 1)
 pico_enable_stdio_usb(PatroGalaxy 1)
 
-# Inclui o diretório da biblioteca pico-ssd1306
-add_subdirectory(pico-ssd1306)
-
 # Vincula as bibliotecas necessárias
 target_link_libraries(PatroGalaxy
     pico_stdlib
-    pico-ssd1306
     hardware_i2c
     hardware_adc
     hardware_timer
@@ -69,6 +65,7 @@ target_include_directories(PatroGalaxy PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src/graphics
   ${CMAKE_CURRENT_SOURCE_DIR}/src/utils
   ${CMAKE_CURRENT_SOURCE_DIR}/src/assets/images
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/assets/fonts
 )
 
 pico_add_extra_outputs(PatroGalaxy)
