@@ -491,7 +491,7 @@ int main()
                 movePlayer(&player, analog_x, analog_y);
             }
 
-            if (checkPlayerCollision())
+            if (checkPlayerCollision(&player))
             {
                 playerDeath();
             }

@@ -1,7 +1,7 @@
 # PatroGalaxy: An Embedded Systems Space Shooter for BitDogLab
 
-[![GitHub Stars](https://img.shields.io/github/stars/luisfpatrocinio/PatroGalaxy?style=social)](https://github.com/luisfpatrocinio/PatroGalaxy)
-[![GitHub Forks](https://img.shields.io/github/forks/luisfpatrocinio/PatroGalaxy?style=social)](https://github.com/luisfpatrocinio/PatroGalaxy)
+[![GitHub Stars](https://img.shields.io/github/stars/luisfpatrocinio/PatroGalaxy?style=social)](https://github.com/luisfpatrocinio/PatroGalaxy)  
+[![GitHub Forks](https://img.shields.io/github/forks/luisfpatrocinio/PatroGalaxy?style=social)](https://github.com/luisfpatrocinio/PatroGalaxy)  
 [![GitHub Issues](https://img.shields.io/github/issues/luisfpatrocinio/PatroGalaxy)](https://github.com/luisfpatrocinio/PatroGalaxy/issues)
 
 ## Overview
@@ -23,7 +23,7 @@ This project showcases the capabilities of the BitDogLab, including its OLED dis
 - **High Score Persistence:** Stores the player's high score in the Raspberry Pi Pico W's flash memory, allowing for persistent record keeping.
 - **Progressive Difficulty:** The game's difficulty increases over time, providing an engaging and challenging experience.
 - **Modular Code Design:** The code is well-structured and modular, making it easy to understand, modify, and extend with new features.
-- **Clean Code:** Well documentated for simple understanding
+- **Clean Code:** Well-documented for simple understanding.
 
 ## Hardware Requirements
 
@@ -33,21 +33,28 @@ This project showcases the capabilities of the BitDogLab, including its OLED dis
 ## Software Requirements
 
 - Raspberry Pi Pico SDK
-- Any IDE that support compilation in C code.
+- Any IDE that supports C code compilation
 
 ## How to Build and Run
 
-1.  **Clone the repository:**
+1. **Clone the repository:**
 
-```bash
-git clone https://github.com/luisfpatrocinio/PatroGalaxy.git
-cd PatroGalaxy
-```
+   ```bash
+   git clone https://github.com/luisfpatrocinio/PatroGalaxy.git
+   cd PatroGalaxy
+   ```
 
-2.  **Configure the build environment:** Follow the instructions for setting up the Raspberry Pi Pico SDK.
-3.  **Compile the code:** Use the appropriate build commands for your environment.
-4.  **Flash the code onto the Raspberry Pi Pico W:** Use the appropriate tools for flashing the code onto the microcontroller.
-5.  **Enjoy PatroGalaxy on your BitDogLab!**
+2. **Initialize submodules:**  
+   This project uses submodules to manage dependencies. After cloning, run the following command to initialize and update the submodules:
+
+   ```bash
+   git submodule update --init --recursive
+   ```
+
+3. **Configure the build environment:** Follow the instructions for setting up the Raspberry Pi Pico SDK.
+4. **Compile the code:** Use the appropriate build commands for your environment.
+5. **Flash the code onto the Raspberry Pi Pico W:** Use the appropriate tools for flashing the code onto the microcontroller.
+6. **Enjoy PatroGalaxy on your BitDogLab!**
 
 ## Code Structure
 
@@ -62,7 +69,7 @@ The codebase is organized into the following key modules:
 
 ## Contributing
 
-This project is intended to be a valuable resource for the embedded systems community, I encourage the improvements to be implemented by anyone. Feel free to:
+This project is intended to be a valuable resource for the embedded systems community. I encourage improvements to be implemented by anyone. Feel free to:
 
 - Submit bug reports
 - Suggest new features

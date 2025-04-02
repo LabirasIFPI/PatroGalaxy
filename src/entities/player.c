@@ -236,7 +236,7 @@ void shoot(Player *player)
  * @return true if a collision occurs, false otherwise.
  * @note The variable `playerInvulnerableTimer` prevent the player of dying in start of game or after a respawn.
  */
-bool checkPlayerCollision()
+bool checkPlayerCollision(Player *player)
 {
     // Se o player está invulnerável, não verificar colisões
     if (playerInvulnerableTimer > 0)
@@ -246,7 +246,8 @@ bool checkPlayerCollision()
     {
         if (asteroids[i].active)
         {
-            if (checkCollision(&player.box, &asteroids[i].box))
+            BoundingBox _playerBox = player->box;
+            if (checkCollision(&_playerBox, &asteroids[i].box))
             {
                 asteroids[i].active = 0;
                 return true;

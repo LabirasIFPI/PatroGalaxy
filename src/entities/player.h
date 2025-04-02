@@ -74,7 +74,7 @@ void drawPlayer(Player *player);
  * @brief Checks for collisions between the Player and asteroids.
  * @return true if a collision occurs, false otherwise.
  */
-bool checkPlayerCollision();
+bool checkPlayerCollision(Player *player);
 
 /**
  * @brief Initializes the Player's particles.
